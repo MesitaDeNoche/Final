@@ -1,15 +1,10 @@
 package com.example.demo.Modelos.DAO.Usuario;
 
-import java.util.List;
 import com.example.demo.Modelos.Entity.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
+import java.util.UUID;
 
-public interface IUsuarioDao {
-    public void save(Usuario usuario);
-
-    public Usuario findOne(Long id);
-
-    public List<Usuario> findAll();
-
-    public void delete(Long id);
-
+public interface IUsuarioDao extends JpaRepository<Usuario, UUID> {
+    Optional<Usuario> findByUsername(String username);
 }

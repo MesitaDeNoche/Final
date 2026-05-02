@@ -19,7 +19,7 @@ public class Cliente extends Persona {
 
     public Cliente(Long cedula, String nombre, String apellido, String email, String telefono,
             LocalDate fechaNacimiento) {
-        super(cedula, nombre, apellido, email, telefono, fechaNacimiento);
+        super(cedula, nombre, apellido, email, telefono, fechaNacimiento); 
     }
 
     public Cliente() {

@@ -3,6 +3,8 @@ package com.example.demo.Modelos.Entity;
 import java.util.UUID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,8 +29,10 @@ public class Usuario {
     @Column(name = "password", nullable = false)
     private String password;
 
+    //Cambio en el campo rol 
+    @Enumerated(EnumType.STRING) // Especifica que el valor del enum se almacenará como una cadena en la base de datos
     @Column(name = "rol", nullable = false, length = 20)
-    private String rol = "USER";
+    private Rol rol = Rol.CLIENTE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cedula_empleado", referencedColumnName = "cedula")
@@ -38,10 +42,14 @@ public class Usuario {
     @Column(name = "created_at", nullable = false)
     private LocalDate createdAt;
 
+    public enum Rol {
+        ADMIN, CLIENTE  
+    }
+
     public Usuario() {
     }
 
-    public Usuario(UUID id, String username, String password, String rol, Empleado empleado, LocalDate createdAt) {
+    public Usuario(UUID id, String username, String password, Rol rol, Empleado empleado, LocalDate createdAt) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -74,11 +82,11 @@ public class Usuario {
         this.password = password;
     }
 
-    public String getRol() {
+    public Rol getRol() {
         return rol;
     }
 
-    public void setRol(String rol) {
+    public void setRol(Rol   rol) {
         this.rol = rol;
     }
 
