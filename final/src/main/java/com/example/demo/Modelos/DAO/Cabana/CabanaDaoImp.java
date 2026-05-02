@@ -47,4 +47,27 @@ public class CabanaDaoImp implements ICabanaDao {
             em.remove(cabana);
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
+    public List<Cabana> findById(Long id) {
+        return em.createQuery("from Cabana c where c.id = :id").setParameter("id", id).getResultList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
+    public List<Cabana> findByZonaIgnoreCase(String zona) {
+        return em.createQuery("from Cabana c where lower(c.zona) = lower(:zona)").setParameter("zona", zona)
+                .getResultList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
+    public List<Cabana> findByCategoriaIgnoreCase(String categoria) {
+        return em.createQuery("from Cabana c where lower(c.categoria) = lower(:categoria)")
+                .setParameter("categoria", categoria).getResultList();
+    }
 }

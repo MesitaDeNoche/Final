@@ -12,4 +12,9 @@ public interface ICabanaDao {
 
     public void delete(Long id);
 
+    public List<Cabana> findById(Long id);
+
+    public List<Cabana> findByZonaIgnoreCase(String zona);
+
+    public List<Cabana> findByCategoriaIgnoreCase(String categoria);
 }
