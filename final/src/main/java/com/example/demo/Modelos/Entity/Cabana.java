@@ -1,16 +1,6 @@
 package com.example.demo.Modelos.Entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
@@ -18,29 +8,39 @@ import java.util.List;
 @Entity
 @Table(name = "cabanas")
 public class Cabana {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "La zona no puede estar vacía")
     @Column(name = "zona", nullable = false, length = 100)
     private String zona;
 
-    @NotBlank
+    @NotBlank(message = "La categoría no puede estar vacía")
     @Column(name = "categoria", nullable = false, length = 100)
     private String categoria;
 
-    @Min(1)
+    @Min(value = 1, message = "La capacidad debe ser al menos 1 persona")
     @Column(name = "capacidad", nullable = false)
     private Integer cantidadPersonas;
 
-    // Relacion que define que las cabañas tienen entretenimientos
-    @ManyToMany(cascade = CascadeType.ALL)
+    /**
+     * Relación ManyToMany con Entretenimiento.
+     *
+     * CAMBIO: Se quitó CascadeType.ALL porque significaba que al borrar una cabaña
+     * se eliminarían también los entretenimientos (compartidos por otras cabañas).
+     * Se usa PERSIST y MERGE para guardar/actualizar en cascada sin eliminar.
+     */
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(name = "cabana_entretenimientos", joinColumns = @JoinColumn(name = "cabana_id"), inverseJoinColumns = @JoinColumn(name = "entretenimiento_id"))
     private List<Entretenimiento> entretenimientos;
 
-    // Relacion que define que las cabañas tienen empleados trabajando en ellas
-    @ManyToMany(fetch = FetchType.LAZY) // Carga los empleados cuando se necesitan (carga perezosa)
+    /**
+     * Relación ManyToMany con Empleado.
+     * FetchType.LAZY: los empleados se cargan sólo cuando se accede a la lista.
+     */
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "cabana_empleados", joinColumns = @JoinColumn(name = "cabana_id"), inverseJoinColumns = @JoinColumn(name = "empleado_id"))
     private List<Empleado> empleados;
 
@@ -54,6 +54,7 @@ public class Cabana {
         this.cantidadPersonas = cantidadPersonas;
     }
 
+    // Getters y Setters
     public Long getId() {
         return id;
     }

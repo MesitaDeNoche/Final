@@ -1,12 +1,7 @@
 package com.example.demo.Modelos.Entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "entretenimientos")
@@ -16,8 +11,8 @@ public class Entretenimiento {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @NotBlank
-    @Column(name = "nombre", nullable = false, length = 100)
+    @NotBlank(message = "El nombre del entretenimiento no puede estar vacío")
+    @Column(name = "nombre", nullable = false, length = 100, unique = true)
     private String nombre;
 
     public Entretenimiento() {
@@ -43,5 +38,4 @@ public class Entretenimiento {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
 }

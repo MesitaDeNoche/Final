@@ -1,20 +1,17 @@
 package com.example.demo.Modelos.Entity;
 
-import java.time.LocalDate;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 
-// Esta es una entidad agregada, donde una persona contrata una cabaña con atributos propios de la relacion
-
+/**
+ * Entidad agregada que representa la contratación de una cabaña por un cliente.
+ *
+ * CAMBIO: Se agregó la relación con Cliente (estaba completamente ausente).
+ * CAMBIO: Se renombraron los campos usando camelCase estándar Java
+ * (id_contrata → idContrata, num_personas → numPersonas, etc.)
+ */
 @Entity
 @Table(name = "contratas")
 public class Contrata {
@@ -22,44 +19,54 @@ public class Contrata {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id_contrata")
-    private Long id_contrata;
+    private Long idContrata; // CAMBIO: camelCase
 
-    @NotNull
+    @NotNull(message = "La cabaña es obligatoria")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_cabana", nullable = false)
     private Cabana cabana;
 
-    // Atributos propios de la relación
+    /**
+     * CAMBIO: Se agregó la relación con Cliente que faltaba por completo.
+     * Sin esto, no se sabía qué cliente contrató la cabaña.
+     */
+    @NotNull(message = "El cliente es obligatorio")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cedula_cliente", nullable = false)
+    private Cliente cliente;
 
-    @Min(1)
+    @Min(value = 1, message = "Debe haber al menos 1 persona")
     @Column(name = "num_personas", nullable = false)
-    private Integer num_personas;
+    private Integer numPersonas; // CAMBIO: camelCase
 
-    @NotNull
+    @NotNull(message = "La fecha de inicio es obligatoria")
     @Column(name = "fecha_inicio", nullable = false)
-    private LocalDate fecha_inicio;
+    private LocalDate fechaInicio; // CAMBIO: camelCase
 
-    @Min(1)
+    @Min(value = 1, message = "La estancia debe ser de al menos 1 día")
     @Column(name = "cant_dias", nullable = false)
-    private Integer cant_dias;
+    private Integer cantDias; // CAMBIO: camelCase
 
     public Contrata() {
     }
 
-    public Contrata(Long id_contrata, Cabana cabana, Integer num_personas, LocalDate fecha_inicio, Integer cant_dias) {
-        this.id_contrata = id_contrata;
+    public Contrata(Long idContrata, Cabana cabana, Cliente cliente,
+            Integer numPersonas, LocalDate fechaInicio, Integer cantDias) {
+        this.idContrata = idContrata;
         this.cabana = cabana;
-        this.num_personas = num_personas;
-        this.fecha_inicio = fecha_inicio;
-        this.cant_dias = cant_dias;
+        this.cliente = cliente;
+        this.numPersonas = numPersonas;
+        this.fechaInicio = fechaInicio;
+        this.cantDias = cantDias;
     }
 
-    public Long getId_contrata() {
-        return id_contrata;
+    // Getters y Setters
+    public Long getIdContrata() {
+        return idContrata;
     }
 
-    public void setId_contrata(Long id_contrata) {
-        this.id_contrata = id_contrata;
+    public void setIdContrata(Long idContrata) {
+        this.idContrata = idContrata;
     }
 
     public Cabana getCabana() {
@@ -70,27 +77,35 @@ public class Contrata {
         this.cabana = cabana;
     }
 
-    public Integer getNum_personas() {
-        return num_personas;
+    public Cliente getCliente() {
+        return cliente;
     }
 
-    public void setNum_personas(Integer num_personas) {
-        this.num_personas = num_personas;
+    public void setCliente(Cliente cliente) {
+        this.cliente = cliente;
     }
 
-    public LocalDate getFecha_inicio() {
-        return fecha_inicio;
+    public Integer getNumPersonas() {
+        return numPersonas;
     }
 
-    public void setFecha_inicio(LocalDate fecha_inicio) {
-        this.fecha_inicio = fecha_inicio;
+    public void setNumPersonas(Integer numPersonas) {
+        this.numPersonas = numPersonas;
     }
 
-    public Integer getCant_dias() {
-        return cant_dias;
+    public LocalDate getFechaInicio() {
+        return fechaInicio;
     }
 
-    public void setCant_dias(Integer cant_dias) {
-        this.cant_dias = cant_dias;
+    public void setFechaInicio(LocalDate fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public Integer getCantDias() {
+        return cantDias;
+    }
+
+    public void setCantDias(Integer cantDias) {
+        this.cantDias = cantDias;
     }
 }

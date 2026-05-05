@@ -1,69 +1,51 @@
 package com.example.demo.Modelos.Entity;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.Min;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import java.util.List;
-import jakarta.persistence.PrimaryKeyJoinColumn;
 
+/**
+ * Entidad que representa a un empleado del sistema.
+ * Extiende Persona usando herencia JOINED.
+ *
+ * CAMBIO: Se reemplazó @Min(0) (para enteros) por @DecimalMin("0.00") correcto
+ * para BigDecimal.
+ */
 @Entity
 @Table(name = "empleados")
 @PrimaryKeyJoinColumn(name = "cedula")
 public class Empleado extends Persona {
 
-    @Min(0)
+    @DecimalMin(value = "0.00", message = "El salario no puede ser negativo") // CAMBIO: correcto para BigDecimal
     @Column(name = "salario", nullable = false, precision = 12, scale = 2)
-    /*
-     * El precision define la cantidad total de digitos, y el scale define la
-     * cantidad de digitos despues del punto decimal
-     * El scale puede ser un valor negativo, que define la cantidad de digitos a la
-     * izquierda del punto decimal
-     */
     private BigDecimal salario;
-    // El BigDecimal es especial para manejar valores monetarios
 
     @Column(name = "descripcion", columnDefinition = "TEXT")
-    /*
-     * TEXT es un tipo de dato de columna que permite almacenar texto de longitud
-     * variable sin limite de caracteres
-     */
     private String descripcion;
 
-    @Column(name = "idiomas")
+    @Column(name = "idiomas", length = 200)
     private String idiomas;
 
-    // Relación Es_Cord: un empleado puede ser coordinado por otro empleado
+    /**
+     * Relación reflexiva: un empleado puede tener un coordinador (otro empleado).
+     * FetchType.LAZY evita cargar toda la cadena de coordinadores innecesariamente.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coordinador_id")
     private Empleado coordinador;
 
-    // Empleados que coordinan
-    @OneToMany(mappedBy = "coordinador", fetch = FetchType.LAZY)
-    /*
-     * mappedBy define que la relacion es bidireccional, que la lista se define en
-     * la
-     * clase Empleado sin necesidad de crear una tabla adicional intermedia.
+    /**
+     * Lista de empleados que este empleado coordina (lado inverso de la relación).
+     * mappedBy evita crear una tabla intermedia extra.
      */
-    private List<Empleado> empleados;
+    @OneToMany(mappedBy = "coordinador", fetch = FetchType.LAZY)
+    private List<Empleado> subordinados; // CAMBIO: renombrado de "empleados" a "subordinados" para mayor claridad
 
     public Empleado() {
     }
 
-    public Empleado(BigDecimal salario, String descripcion, String idiomas, Empleado coordinador,
-            List<Empleado> empleados) {
-        this.salario = salario;
-        this.descripcion = descripcion;
-        this.idiomas = idiomas;
-        this.coordinador = coordinador;
-        this.empleados = empleados;
-    }
-
+    // Getters y Setters
     public BigDecimal getSalario() {
         return salario;
     }
@@ -96,12 +78,11 @@ public class Empleado extends Persona {
         this.coordinador = coordinador;
     }
 
-    public List<Empleado> getEmpleados() {
-        return empleados;
+    public List<Empleado> getSubordinados() {
+        return subordinados;
     }
 
-    public void setEmpleados(List<Empleado> empleados) {
-        this.empleados = empleados;
+    public void setSubordinados(List<Empleado> subordinados) {
+        this.subordinados = subordinados;
     }
-
 }

@@ -1,82 +1,101 @@
 package com.example.demo.Controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import com.example.demo.Modelos.DAO.Cabana.ICabanaDao;
-import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
+import com.example.demo.Modelos.DAO.ICabanaDao;
 import com.example.demo.Modelos.Entity.Cabana;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+/**
+ * Controlador REST para la entidad Cabaña.
+ *
+ * CAMBIO CRÍTICO: Se reemplazaron cabanaDao.findOne(id) y cabanaDao.delete(id)
+ * que NO EXISTEN en Spring Data JPA moderno, por:
+ * - cabanaDao.findById(id) → devuelve Optional<Cabana>
+ * - cabanaDao.deleteById(id)
+ *
+ * CAMBIO: Se agregó @RequestMapping("/api/cabana") con prefijo /api para
+ * separar la API REST de las rutas de vistas Thymeleaf y facilitar el CORS.
+ */
 @RestController
-@RequestMapping("/cabana")
-@CrossOrigin(origins = "*") // Permite que cualquier origen se conecte
+@RequestMapping("/api/cabana")
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173" }) // Orígenes del frontend
 public class CabanaController {
 
     @Autowired
     private ICabanaDao cabanaDao;
 
+    /**
+     * GET /api/cabana → Devuelve todas las cabañas
+     */
     @GetMapping
     public List<Cabana> getAllCabanas() {
-        return cabanaDao.findAll(); // devuelve todas las cabanas
+        return cabanaDao.findAll();
     }
 
-    // mostrar una cabana por id
+    /**
+     * GET /api/cabana/{id} → Devuelve una cabaña por ID o 404
+     */
     @GetMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<Cabana> getCabanaById(@PathVariable Long id) {
-        return cabanaDao.findById(id).stream().findFirst() // conversion a optional y luego a response entity
-                .map(ResponseEntity::ok) // si existe la cabana, la devuelve con estado 200
-                .orElse(ResponseEntity.notFound().build()); // si no existe, devuelve 404
+        return cabanaDao.findById(id) // CAMBIO: findById en lugar de findOne
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // crear una cabana
+    /**
+     * POST /api/cabana → Crea una nueva cabaña
+     */
     @PostMapping
     public ResponseEntity<Cabana> create(@Valid @RequestBody Cabana cabana) {
-        cabana.setId(null);
-        cabanaDao.save(cabana); // Se guarda en la base de datos
-        return ResponseEntity.status(HttpStatus.CREATED).body(cabana); // Se devuelve el objeto guardado
+        cabana.setId(null); // Asegurar que se genere un ID nuevo (no se acepta del cliente)
+        Cabana guardada = cabanaDao.save(cabana);
+        return ResponseEntity.status(HttpStatus.CREATED).body(guardada);
     }
 
+    /**
+     * PUT /api/cabana/{id} → Actualiza una cabaña existente
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<Cabana> update(@Valid @PathVariable Long id, @RequestBody Cabana cabana) {
-        // Verificamos si existe usando findOne (si devuelve null, no existe)
-        if (cabanaDao.findOne(id) == null) {
+    @SuppressWarnings("null")
+    public ResponseEntity<Cabana> update(@PathVariable Long id, @Valid @RequestBody Cabana cabana) {
+        if (!cabanaDao.existsById(id)) { // CAMBIO: existsById en lugar de findOne != null
             return ResponseEntity.notFound().build();
         }
-        // Actualizamos el ID y guardamos (sin retornar el save)
         cabana.setId(id);
-        cabanaDao.save(cabana);
-        // Devolvemos la cabaña guardada
-        return ResponseEntity.ok(cabana);
+        Cabana actualizada = cabanaDao.save(cabana);
+        return ResponseEntity.ok(actualizada);
     }
 
-    // borrar una cabana
+    /**
+     * DELETE /api/cabana/{id} → Elimina una cabaña
+     */
     @DeleteMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        // Verificamos si existe usando findOne (si devuelve null, no existe)
-        if (cabanaDao.findOne(id) == null) {
+        if (!cabanaDao.existsById(id)) { // CAMBIO: existsById
             return ResponseEntity.notFound().build();
         }
-        // Eliminamos la cabaña
-        cabanaDao.delete(id);
-        // Devolvemos 204 No Content (respuesta estándar para eliminaciones exitosas)
+        cabanaDao.deleteById(id); // CAMBIO: deleteById en lugar de delete(id)
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * GET /api/cabana/zona/{zona} → Filtra por zona (sin distinguir mayúsculas)
+     */
     @GetMapping("/zona/{zona}")
     public List<Cabana> getCabanasByZona(@PathVariable String zona) {
         return cabanaDao.findByZonaIgnoreCase(zona);
     }
 
+    /**
+     * GET /api/cabana/categoria/{categoria} → Filtra por categoría
+     */
     @GetMapping("/categoria/{categoria}")
     public List<Cabana> getCabanasByCategoria(@PathVariable String categoria) {
         return cabanaDao.findByCategoriaIgnoreCase(categoria);

@@ -1,31 +1,31 @@
 package com.example.demo.Modelos.Entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.time.LocalDate;
-import jakarta.persistence.Column;
-import jakarta.persistence.PrimaryKeyJoinColumn;
 
+/**
+ * Entidad que representa a un cliente del sistema.
+ * Extiende Persona usando herencia JOINED (tabla propia "clientes" + FK a
+ * "personas").
+ */
 @Entity
 @Table(name = "clientes")
-@PrimaryKeyJoinColumn(name = "cedula")
+@PrimaryKeyJoinColumn(name = "cedula") // FK que referencia personas.cedula
 public class Cliente extends Persona {
 
     @Column(name = "fecha_prim_contacto")
     private LocalDate fechaPrimContacto;
 
-    @Column(name = "pais")
+    @Column(name = "pais", length = 100)
     private String pais;
-
-    public Cliente(Long cedula, String nombre, String apellido, String email, String telefono,
-            LocalDate fechaNacimiento) {
-        super(cedula, nombre, apellido, email, telefono, fechaNacimiento);
-    }
 
     public Cliente() {
     }
 
-    public Cliente(LocalDate fechaPrimContacto, String pais) {
+    public Cliente(Long cedula, String nombre, String apellido, String email,
+            String telefono, LocalDate fechaNacimiento,
+            LocalDate fechaPrimContacto, String pais) {
+        super(cedula, nombre, apellido, email, telefono, fechaNacimiento);
         this.fechaPrimContacto = fechaPrimContacto;
         this.pais = pais;
     }
@@ -45,5 +45,4 @@ public class Cliente extends Persona {
     public void setPais(String pais) {
         this.pais = pais;
     }
-
 }
