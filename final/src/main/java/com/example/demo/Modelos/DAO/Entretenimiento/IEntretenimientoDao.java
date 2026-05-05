@@ -1,14 +1,8 @@
 package com.example.demo.Modelos.DAO.Entretenimiento;
 
-import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.demo.Modelos.Entity.Entretenimiento;
 
-public interface IEntretenimientoDao {
-    public void save(Entretenimiento entretenimiento);
+public interface IEntretenimientoDao extends JpaRepository<Entretenimiento, Long>{
 
-    public Entretenimiento findOne(Long id);
-
-    public List<Entretenimiento> findAll();
-
-    public void delete(Long id);
 }

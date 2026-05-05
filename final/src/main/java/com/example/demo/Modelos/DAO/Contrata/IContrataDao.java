@@ -1,14 +1,7 @@
 package com.example.demo.Modelos.DAO.Contrata;
 
-import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.demo.Modelos.Entity.Contrata;
+public interface IContrataDao extends JpaRepository<Contrata, Long> {
 
-public interface IContrataDao {
-    public void save(Contrata contrato);
-
-    public Contrata findOne(Long id);
-
-    public List<Contrata> findAll();
-
-    public void delete(Long id);
 }

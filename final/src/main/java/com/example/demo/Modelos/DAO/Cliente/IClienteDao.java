@@ -1,16 +1,9 @@
 package com.example.demo.Modelos.DAO.Cliente;
 
-import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.demo.Modelos.Entity.Cliente;
 
-public interface IClienteDao {
-    public void save(Cliente cliente);
-
-    public Cliente findOne(Long id);
-
-    public List<Cliente> findAll();
-
-    public void delete(Long id);
-
-    public Cliente findByNombre(String nombre);
+public interface IClienteDao extends JpaRepository<Cliente, Long> {
+    Optional<Cliente> findByCedula(long cedula);
 }

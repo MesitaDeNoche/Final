@@ -1,15 +1,9 @@
 package com.example.demo.Modelos.DAO.Cabana;
 
-import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import com.example.demo.Modelos.Entity.Cabana;
 
-public interface ICabanaDao {
-    public void save(Cabana cabana);
-
-    public Cabana findOne(Long id);
-
-    public List<Cabana> findAll();
-
-    public void delete(Long id);
+public interface ICabanaDao extends JpaRepository<Cabana, Long> {
 
 }
