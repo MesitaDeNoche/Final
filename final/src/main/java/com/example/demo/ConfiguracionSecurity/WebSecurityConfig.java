@@ -1,43 +1,67 @@
 package com.example.demo.ConfiguracionSecurity;
 
+import com.example.demo.Services.UsuarioService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+//import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-/**
- * Configuración MVC: rutas simples y CORS para el frontend React.
- *
- * CAMBIO: Se agregó configuración de CORS para permitir que el frontend React
- * en localhost:3000 se comunique con la API.
- */
 @Configuration
-public class WebSecurityConfig implements WebMvcConfigurer {
+@EnableWebSecurity
+public class WebSecurityConfig {
 
-    @Override
-    @SuppressWarnings("null")
-    public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/home").setViewName("Login/home");
-        registry.addViewController("/indexAdmin").setViewName("UserAdmin/indexAdmin");
-        registry.addViewController("/login").setViewName("Login/login");
-        // CAMBIO: Se agrega la vista de registro
-        registry.addViewController("/registro").setViewName("Login/registro");
-        // CAMBIO: Se agrega la vista del panel de cliente
-        registry.addViewController("/indexCliente").setViewName("UserCliente/indexCliente");
+    @Autowired
+    private UsuarioService usuarioService;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
-    /**
-     * CAMBIO: CORS global para el frontend React en desarrollo.
-     * Permite que React (localhost:3000) llame a la API (localhost:8080).
-     * Para producción, reemplaza el origen con el dominio real.
-     */
-    @Override
-    @SuppressWarnings("null")
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins("http://localhost:3000", "http://localhost:5173") // React y Vite
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
+    @Bean
+    public DaoAuthenticationProvider authProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(passwordEncoder());
+        provider.setUserDetailsService(usuarioService); // este sí se mantiene así
+        return provider;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authenticationProvider(authProvider())
+                .authorizeHttpRequests(requests -> requests
+                        .requestMatchers("/", "/home", "/login", "/registro").permitAll()
+                        .requestMatchers("/index/**").hasRole("ADMIN")
+                        .requestMatchers("/indexCliente/**").hasRole("CLIENTE")
+                        .requestMatchers("/cliente/**").hasRole("CLIENTE")
+                        .anyRequest().authenticated())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .successHandler((request, response, authentication) -> {
+                            boolean esAdmin = authentication.getAuthorities().stream()
+                                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                            if (esAdmin) {
+                                response.sendRedirect("/index");
+                            } else {
+                                response.sendRedirect("/indexCliente");
+                            }
+                        })
+                        .permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .invalidateHttpSession(true) // ← invalida la sesión
+                        .clearAuthentication(true) // ← limpia credenciales
+                        .deleteCookies("JSESSIONID") // ← elimina la cookie de sesión
+                        .permitAll());
+
+        return http.build();
     }
 }
