@@ -51,12 +51,13 @@ public class RegistroService {
         }
 
         // Validar que el email no exista (unicidad en la tabla personas)
-        if (clienteDao.findByEmail(dto.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("El email ya está registrado");
+        if (clienteDao.findByCedula(dto.getCedula()).isPresent()) {
+            throw new IllegalArgumentException("La cedula ya está registrada");
         }
 
         // Crear y guardar el Cliente (que extiende Persona)
         Cliente cliente = new Cliente();
+        cliente.setCedula(dto.getCedula());
         cliente.setNombre(dto.getNombre());
         cliente.setApellido(dto.getApellido());
         cliente.setEmail(dto.getEmail());
