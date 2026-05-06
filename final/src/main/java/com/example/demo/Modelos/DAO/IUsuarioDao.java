@@ -7,4 +7,7 @@ import java.util.UUID;
 
 public interface IUsuarioDao extends JpaRepository<Usuario, UUID> {
     Optional<Usuario> findByUsername(String username);
+
+    Optional<Usuario> findByEmail(String email);
+
 }

@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import java.util.Optional;
 
 import java.util.List;
 
@@ -38,5 +39,14 @@ public class UsuarioService implements UserDetailsService {
                 usuario.getUsername(),
                 usuario.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name())));
+    }
+
+    public boolean login(String email, String password) {
+        Optional<Usuario> user = usuarioDao.findByEmail(email);
+
+        if (user.isPresent()) {
+            return user.get().getPassword().equals(password);
+        }
+        return false;
     }
 }

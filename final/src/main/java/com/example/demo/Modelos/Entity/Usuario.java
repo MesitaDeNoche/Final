@@ -50,6 +50,9 @@ public class Usuario {
     @Column(name = "created_at", nullable = false, updatable = false) // CAMBIO: updatable = false
     private LocalDate createdAt;
 
+    @Column(name = "email", nullable = false, unique = true, length = 100)
+    private String email;
+
     public enum Rol {
         ADMIN, CLIENTE
     }
@@ -123,5 +126,13 @@ public class Usuario {
 
     public void setCreatedAt(LocalDate createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
