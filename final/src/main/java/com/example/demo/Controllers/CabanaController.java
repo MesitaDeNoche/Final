@@ -1,7 +1,9 @@
 package com.example.demo.Controllers;
 
 import com.example.demo.Modelos.DAO.ICabanaDao;
+import com.example.demo.Modelos.DAO.IEntretenimientoDao;
 import com.example.demo.Modelos.Entity.Cabana;
+import com.example.demo.Modelos.Entity.Entretenimiento;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,95 +11,76 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
-/**
- * Controlador REST para la entidad Cabaña.
- *
- * CAMBIO CRÍTICO: Se reemplazaron cabanaDao.findOne(id) y cabanaDao.delete(id)
- * que NO EXISTEN en Spring Data JPA moderno, por:
- * - cabanaDao.findById(id) → devuelve Optional<Cabana>
- * - cabanaDao.deleteById(id)
- *
- * CAMBIO: Se agregó @RequestMapping("/api/cabana") con prefijo /api para
- * separar la API REST de las rutas de vistas Thymeleaf y facilitar el CORS.
- */
 @RestController
 @RequestMapping("/api/cabana")
-@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173" }) // Orígenes del frontend
+@CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173" })
 public class CabanaController {
 
-    @Autowired
-    private ICabanaDao cabanaDao;
+    @Autowired private ICabanaDao cabanaDao;
+    @Autowired private IEntretenimientoDao entretenimientoDao;
 
-    /**
-     * GET /api/cabana → Devuelve todas las cabañas
-     */
     @GetMapping
-    public List<Cabana> getAllCabanas() {
-        return cabanaDao.findAll();
-    }
+    public List<Cabana> getAll() { return cabanaDao.findAll(); }
 
-    /**
-     * GET /api/cabana/{id} → Devuelve una cabaña por ID o 404
-     */
     @GetMapping("/{id}")
-    @SuppressWarnings("null")
-    public ResponseEntity<Cabana> getCabanaById(@PathVariable Long id) {
-        return cabanaDao.findById(id) // CAMBIO: findById en lugar de findOne
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Cabana> getById(@PathVariable Long id) {
+        return cabanaDao.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * POST /api/cabana → Crea una nueva cabaña
-     */
     @PostMapping
-    public ResponseEntity<Cabana> create(@Valid @RequestBody Cabana cabana) {
-        cabana.setId(null); // Asegurar que se genere un ID nuevo (no se acepta del cliente)
-        Cabana guardada = cabanaDao.save(cabana);
-        return ResponseEntity.status(HttpStatus.CREATED).body(guardada);
+    public ResponseEntity<Cabana> create(@RequestBody Map<String, Object> body) {
+        Cabana c = buildFromBody(new Cabana(), body);
+        c.setId(null);
+        return ResponseEntity.status(HttpStatus.CREATED).body(cabanaDao.save(c));
     }
 
-    /**
-     * PUT /api/cabana/{id} → Actualiza una cabaña existente
-     */
     @PutMapping("/{id}")
-    @SuppressWarnings("null")
-    public ResponseEntity<Cabana> update(@PathVariable Long id, @Valid @RequestBody Cabana cabana) {
-        if (!cabanaDao.existsById(id)) { // CAMBIO: existsById en lugar de findOne != null
-            return ResponseEntity.notFound().build();
-        }
-        cabana.setId(id);
-        Cabana actualizada = cabanaDao.save(cabana);
-        return ResponseEntity.ok(actualizada);
+    public ResponseEntity<Cabana> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return cabanaDao.findById(id).map(existing -> {
+            buildFromBody(existing, body);
+            existing.setId(id);
+            return ResponseEntity.ok(cabanaDao.save(existing));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * DELETE /api/cabana/{id} → Elimina una cabaña
-     */
     @DeleteMapping("/{id}")
-    @SuppressWarnings("null")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!cabanaDao.existsById(id)) { // CAMBIO: existsById
-            return ResponseEntity.notFound().build();
-        }
-        cabanaDao.deleteById(id); // CAMBIO: deleteById en lugar de delete(id)
+        if (!cabanaDao.existsById(id)) return ResponseEntity.notFound().build();
+        cabanaDao.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * GET /api/cabana/zona/{zona} → Filtra por zona (sin distinguir mayúsculas)
-     */
     @GetMapping("/zona/{zona}")
-    public List<Cabana> getCabanasByZona(@PathVariable String zona) {
+    public List<Cabana> getByZona(@PathVariable String zona) {
         return cabanaDao.findByZonaIgnoreCase(zona);
     }
 
-    /**
-     * GET /api/cabana/categoria/{categoria} → Filtra por categoría
-     */
     @GetMapping("/categoria/{categoria}")
-    public List<Cabana> getCabanasByCategoria(@PathVariable String categoria) {
+    public List<Cabana> getByCategoria(@PathVariable String categoria) {
         return cabanaDao.findByCategoriaIgnoreCase(categoria);
+    }
+
+    // ── Helper: construye Cabana desde el body Map ───────────────
+    private Cabana buildFromBody(Cabana c, Map<String, Object> body) {
+        if (body.containsKey("zona"))             c.setZona(body.get("zona").toString());
+        if (body.containsKey("categoria"))        c.setCategoria(body.get("categoria").toString());
+        if (body.containsKey("cantidadPersonas")) c.setCantidadPersonas(Integer.valueOf(body.get("cantidadPersonas").toString()));
+        if (body.containsKey("precioNoche"))      c.setPrecioNoche(Double.valueOf(body.get("precioNoche").toString()));
+        if (body.containsKey("fotoUrl"))          c.setFotoUrl(body.get("fotoUrl").toString());
+        if (body.containsKey("descripcion"))      c.setDescripcion(body.get("descripcion").toString());
+
+        // Relación entretenimientos: viene como lista de IDs [1, 2, 3]
+        if (body.containsKey("entretenimientoIds")) {
+            @SuppressWarnings("unchecked")
+            List<Integer> ids = (List<Integer>) body.get("entretenimientoIds");
+            List<Entretenimiento> ents = ids.stream()
+                    .map(id -> entretenimientoDao.findById(Long.valueOf(id)).orElse(null))
+                    .filter(e -> e != null)
+                    .toList();
+            c.setEntretenimientos(ents);
+        }
+        return c;
     }
 }

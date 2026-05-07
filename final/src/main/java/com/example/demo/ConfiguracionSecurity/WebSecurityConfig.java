@@ -4,6 +4,7 @@ import com.example.demo.Services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,10 +32,12 @@ public class WebSecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {
-                }) // Usa la config de MvcConfig/WebSecurityConfig
+                })
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Login y registro: públicos
-                        .requestMatchers("/api/**").authenticated() // Resto de la API: requiere login
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cabana/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/entretenimiento/**").permitAll()
+                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .userDetailsService(usuarioService)
                 .httpBasic(basic -> basic.disable())
