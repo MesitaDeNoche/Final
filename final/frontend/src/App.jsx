@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 // ============================================================
 // ESTILOS GLOBALES
 // ============================================================
+//Linea 52: cambio del color de la letra en el campo error para mejorar la visibilidad de las letras
 const globalStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,7 +50,7 @@ const globalStyles = `
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   @keyframes spin   { to{transform:rotate(360deg)} }
   @keyframes shake  { 0%,100%{transform:translateX(0)} 15%{transform:translateX(-7px)} 30%{transform:translateX(7px)} 45%{transform:translateX(-5px)} 60%{transform:translateX(5px)} 75%{transform:translateX(-3px)} 90%{transform:translateX(3px)} }
-  .field-error { border-color: #ef4444 !important; background: #fff5f5 !important; }
+  .field-error { border-color: #ef4444 !important; background: #fff5f5 !important; color: #1a1a1a !important; } 
   .field-shake { animation: shake 0.45s ease both; }
   .modal-overlay {
     position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;
