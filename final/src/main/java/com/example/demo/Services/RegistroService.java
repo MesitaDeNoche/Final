@@ -51,13 +51,13 @@ public class RegistroService {
         }
 
         // Validar que el email no exista (unicidad en la tabla personas)
-        if (clienteDao.findByCedula(dto.getCedula()).isPresent()) {
-            throw new IllegalArgumentException("La cedula ya está registrada");
+        if (clienteDao.findByEmail(dto.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("El email ya está registrado");
         }
 
         // Crear y guardar el Cliente (que extiende Persona)
+        // La cédula es generada automáticamente por la secuencia de la BD
         Cliente cliente = new Cliente();
-        cliente.setCedula(dto.getCedula());
         cliente.setNombre(dto.getNombre());
         cliente.setApellido(dto.getApellido());
         cliente.setEmail(dto.getEmail());
@@ -72,6 +72,7 @@ public class RegistroService {
         usuario.setUsername(dto.getUsername());
         usuario.setPassword(passwordEncoder.encode(dto.getPassword())); // Contraseña hasheada con BCrypt
         usuario.setRol(Rol.CLIENTE);
+        usuario.setEmail(dto.getEmail());
         usuario.setCreatedAt(LocalDate.now());
         usuario.setCliente(cliente); // Vincula la cuenta al cliente recién creado
         usuarioDao.save(usuario);

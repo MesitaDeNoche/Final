@@ -4,7 +4,6 @@ import com.example.demo.Modelos.DAO.ICabanaDao;
 import com.example.demo.Modelos.DAO.IEntretenimientoDao;
 import com.example.demo.Modelos.Entity.Cabana;
 import com.example.demo.Modelos.Entity.Entretenimiento;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +17,15 @@ import java.util.Map;
 @CrossOrigin(origins = { "http://localhost:3000", "http://localhost:5173" })
 public class CabanaController {
 
-    @Autowired private ICabanaDao cabanaDao;
-    @Autowired private IEntretenimientoDao entretenimientoDao;
+    @Autowired
+    private ICabanaDao cabanaDao;
+    @Autowired
+    private IEntretenimientoDao entretenimientoDao;
 
     @GetMapping
-    public List<Cabana> getAll() { return cabanaDao.findAll(); }
+    public List<Cabana> getAll() {
+        return cabanaDao.findAll();
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Cabana> getById(@PathVariable Long id) {
@@ -47,7 +50,8 @@ public class CabanaController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!cabanaDao.existsById(id)) return ResponseEntity.notFound().build();
+        if (!cabanaDao.existsById(id))
+            return ResponseEntity.notFound().build();
         cabanaDao.deleteById(id);
         return ResponseEntity.noContent().build();
     }
@@ -64,12 +68,18 @@ public class CabanaController {
 
     // ── Helper: construye Cabana desde el body Map ───────────────
     private Cabana buildFromBody(Cabana c, Map<String, Object> body) {
-        if (body.containsKey("zona"))             c.setZona(body.get("zona").toString());
-        if (body.containsKey("categoria"))        c.setCategoria(body.get("categoria").toString());
-        if (body.containsKey("cantidadPersonas")) c.setCantidadPersonas(Integer.valueOf(body.get("cantidadPersonas").toString()));
-        if (body.containsKey("precioNoche"))      c.setPrecioNoche(Double.valueOf(body.get("precioNoche").toString()));
-        if (body.containsKey("fotoUrl"))          c.setFotoUrl(body.get("fotoUrl").toString());
-        if (body.containsKey("descripcion"))      c.setDescripcion(body.get("descripcion").toString());
+        if (body.containsKey("zona"))
+            c.setZona(body.get("zona").toString());
+        if (body.containsKey("categoria"))
+            c.setCategoria(body.get("categoria").toString());
+        if (body.containsKey("cantidadPersonas"))
+            c.setCantidadPersonas(Integer.valueOf(body.get("cantidadPersonas").toString()));
+        if (body.containsKey("precioNoche"))
+            c.setPrecioNoche(Double.valueOf(body.get("precioNoche").toString()));
+        if (body.containsKey("fotoUrl"))
+            c.setFotoUrl(body.get("fotoUrl").toString());
+        if (body.containsKey("descripcion"))
+            c.setDescripcion(body.get("descripcion").toString());
 
         // Relación entretenimientos: viene como lista de IDs [1, 2, 3]
         if (body.containsKey("entretenimientoIds")) {
