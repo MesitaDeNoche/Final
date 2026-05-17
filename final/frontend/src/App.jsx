@@ -70,6 +70,12 @@ const globalStyles = `
   /* Ojo contraseña */
   .pwd-toggle { position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;display:flex;align-items:center;transition:color .2s; }
   .pwd-toggle:hover { color:var(--bark); }
+  /* Inputs nativos en modo oscuro */
+  input[type=date], input[type=number], input[type=text], input[type=email], input[type=tel], input[type=password], select, textarea {
+    color-scheme: light dark;
+  }
+  [data-theme="dark"] input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1); }
+  [data-theme="dark"] select option { background: var(--surface2); color: var(--bark); }
 `;
 
 const StyleInjector = () => {
@@ -182,7 +188,7 @@ const Field = ({ label, required, ...props }) => {
         {label}{required && <span style={{ color: "#dc2626" }}> *</span>}
       </label>
       <input onFocus={() => setF(true)} onBlur={() => setF(false)} {...props}
-        style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${f ? "var(--moss)" : "var(--fog)"}`, borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "white", fontFamily: "'DM Sans',sans-serif", ...(props.style || {}) }} />
+        style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${f ? "var(--moss)" : "var(--fog)"}`, borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif", ...(props.style || {}) }} />
     </div>
   );
 };
@@ -191,7 +197,7 @@ const Field = ({ label, required, ...props }) => {
 // MODAL DETALLE CABAÑA (con foto grande, entretenimientos, reserva)
 // ============================================================
 const DetalleCabanaModal = ({ cabana, username, esAdmin, onClose, showToast, onReservado }) => {
-  const [tab, setTab] = useState("info");
+  const [tab, setTab] = useState(cabana._openTab || "info");
   const [resForm, setResForm] = useState({ numPersonas: "1", fechaInicio: "", cantDias: "1" });
   const [loading, setLoading] = useState(false);
   const cc = catColor(cabana.categoria);
@@ -200,9 +206,14 @@ const DetalleCabanaModal = ({ cabana, username, esAdmin, onClose, showToast, onR
 
   const handleReservar = async () => {
     if (!resForm.fechaInicio) { showToast("Selecciona una fecha de inicio.", "err"); return; }
+    const personas = Number(resForm.numPersonas);
+    const dias = Number(resForm.cantDias);
+    if (!personas || personas < 1) { showToast("El número de personas debe ser al menos 1.", "err"); return; }
+    if (personas > cabana.cantidadPersonas) { showToast(`La cabaña admite máximo ${cabana.cantidadPersonas} personas.`, "err"); return; }
+    if (!dias || dias < 1) { showToast("La estadía debe ser de al menos 1 día.", "err"); return; }
     setLoading(true);
     try {
-      await api("/api/contrata", { method: "POST", body: JSON.stringify({ cabanaId: cabana.id, username, numPersonas: resForm.numPersonas, fechaInicio: resForm.fechaInicio, cantDias: resForm.cantDias }) });
+      await api("/api/contrata", { method: "POST", body: JSON.stringify({ cabanaId: cabana.id, username, numPersonas: personas, fechaInicio: resForm.fechaInicio, cantDias: dias }) });
       showToast("¡Reserva creada con éxito!", "ok");
       onReservado();
     } catch (e) { showToast(e.message, "err"); }
@@ -287,7 +298,11 @@ const DetalleCabanaModal = ({ cabana, username, esAdmin, onClose, showToast, onR
       {tab === "reservar" && (
         <div>
           {!username ? (
-            <p style={{ color: "#dc2626", textAlign: "center", padding: "20px" }}>Debes iniciar sesión para reservar.</p>
+            <div style={{ textAlign: "center", padding: "30px 20px" }}>
+              <p style={{ fontSize: "32px", marginBottom: "12px" }}>🔒</p>
+              <p style={{ color: "var(--bark)", fontFamily: "'Cormorant Garamond',serif", fontSize: "20px", marginBottom: "8px" }}>Inicia sesión para reservar</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>Necesitas una cuenta para hacer una reserva en Mar Azul.</p>
+            </div>
           ) : (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -372,7 +387,7 @@ const CabanaFormModal = ({ cabana, entretenimientos, onClose, onSaved, showToast
             Categoría <span style={{ color: "#dc2626" }}>*</span>
           </label>
           <select value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}
-            style={{ width: "100%", padding: "11px 14px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "white", fontFamily: "'DM Sans',sans-serif" }}>
+            style={{ width: "100%", padding: "11px 14px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif" }}>
             <option value="">Seleccionar...</option>
             {["Estándar", "Premium", "Suite"].map(c => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -386,7 +401,7 @@ const CabanaFormModal = ({ cabana, entretenimientos, onClose, onSaved, showToast
           <label style={{ display: "block", fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--bark)", marginBottom: "6px" }}>Descripción</label>
           <textarea value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} rows={3}
             placeholder="Descripción breve de la cabaña..."
-            style={{ width: "100%", padding: "11px 14px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "white", fontFamily: "'DM Sans',sans-serif", resize: "vertical" }} />
+            style={{ width: "100%", padding: "11px 14px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif", resize: "vertical" }} />
         </div>
       </div>
 
@@ -520,7 +535,7 @@ const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRef
 
       <div style={{ padding: "32px 40px", maxWidth: "1200px", margin: "0 auto" }}>
         {/* Filtros */}
-        <div style={{ background: "white", borderRadius: "14px", padding: "20px 24px", border: "1px solid var(--fog)", boxShadow: "0 2px 8px var(--shadow)", marginBottom: "28px" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px 24px", border: "1px solid var(--fog)", boxShadow: "0 2px 8px var(--shadow)", marginBottom: "28px" }}>
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-end" }}>
             {/* Buscador */}
             <div style={{ flex: "1", minWidth: "200px" }}>
@@ -528,14 +543,14 @@ const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRef
               <div style={{ position: "relative" }}>
                 <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#b0a090" }}><SearchIcon /></span>
                 <input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Zona, categoría, descripción..."
-                  style={{ width: "100%", padding: "9px 12px 9px 36px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", fontFamily: "'DM Sans',sans-serif" }} />
+                  style={{ width: "100%", padding: "9px 12px 9px 36px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif" }} />
               </div>
             </div>
             {/* Categoría */}
             <div style={{ minWidth: "140px" }}>
               <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a7060", marginBottom: "6px" }}>Categoría</label>
               <select value={filtCat} onChange={e => setFiltCat(e.target.value)}
-                style={{ width: "100%", padding: "9px 12px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "white", fontFamily: "'DM Sans',sans-serif" }}>
+                style={{ width: "100%", padding: "9px 12px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif" }}>
                 {cats.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
@@ -543,7 +558,7 @@ const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRef
             <div style={{ minWidth: "160px" }}>
               <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a7060", marginBottom: "6px" }}>Zona</label>
               <select value={filtZona} onChange={e => setFiltZona(e.target.value)}
-                style={{ width: "100%", padding: "9px 12px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "white", fontFamily: "'DM Sans',sans-serif" }}>
+                style={{ width: "100%", padding: "9px 12px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif" }}>
                 {zonas.map(z => <option key={z} value={z}>{z}</option>)}
               </select>
             </div>
@@ -556,7 +571,7 @@ const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRef
             <div style={{ minWidth: "140px" }}>
               <label style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a7060", marginBottom: "6px" }}>Ordenar</label>
               <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-                style={{ width: "100%", padding: "9px 12px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "white", fontFamily: "'DM Sans',sans-serif" }}>
+                style={{ width: "100%", padding: "9px 12px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif" }}>
                 <option value="zona">Por zona</option>
                 <option value="precio">Menor precio</option>
               </select>
@@ -580,7 +595,7 @@ const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRef
               const ents = cab.entretenimientos || [];
               return (
                 <div key={cab.id}
-                  style={{ background: "white", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--fog)", boxShadow: "0 2px 8px var(--shadow)", transition: "all .25s", animation: `fadeUp .5s ease ${i * .06}s both`, cursor: "pointer" }}
+                  style={{ background: "var(--surface)", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--fog)", boxShadow: "0 2px 8px var(--shadow)", transition: "all .25s", animation: `fadeUp .5s ease ${i * .06}s both`, cursor: "pointer" }}
                   onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 32px var(--shadow)"; e.currentTarget.style.borderColor = "var(--moss)"; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 8px var(--shadow)"; e.currentTarget.style.borderColor = "var(--fog)"; }}>
 
@@ -731,7 +746,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
     <div style={{ minHeight: "100vh", background: "var(--cream)", fontFamily: "'DM Sans',sans-serif" }}>
 
       {/* Navbar */}
-      <header style={{ background: "white", borderBottom: "1px solid var(--fog)", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 12px var(--shadow)" }}>
+      <header style={{ background: "var(--surface)", borderBottom: "1px solid var(--fog)", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 12px var(--shadow)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{ width: "32px", height: "32px", background: "var(--bark)", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gold)" }}><MountainIcon /></div>
@@ -804,7 +819,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
             {/* Stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px", marginBottom: "40px" }}>
               {statsCards.map((s, i) => (
-                <div key={i} style={{ background: "white", borderRadius: "12px", padding: "20px 24px", border: "1px solid var(--fog)", animation: `fadeUp .5s ease ${i * .08}s both`, boxShadow: "0 2px 8px var(--shadow)" }}>
+                <div key={i} style={{ background: "var(--surface)", borderRadius: "12px", padding: "20px 24px", border: "1px solid var(--fog)", animation: `fadeUp .5s ease ${i * .08}s both`, boxShadow: "0 2px 8px var(--shadow)" }}>
                   <p style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#b0a090", fontWeight: 500, marginBottom: "8px" }}>{s.label}</p>
                   <p style={{ fontSize: "28px", fontFamily: "'Cormorant Garamond',serif", fontWeight: 600, color: s.color }}>{s.value}</p>
                 </div>
@@ -829,7 +844,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
                 {cabanas.slice(0, 4).map((cab, i) => {
                   const cc = catColor(cab.categoria);
                   return (
-                    <div key={cab.id} style={{ background: "white", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--fog)", animation: `fadeUp .5s ease ${i * .08}s both`, boxShadow: "0 2px 8px var(--shadow)" }}>
+                    <div key={cab.id} style={{ background: "var(--surface)", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--fog)", animation: `fadeUp .5s ease ${i * .08}s both`, boxShadow: "0 2px 8px var(--shadow)" }}>
                       <img src={getFoto(cab)} alt={cab.zona} style={{ width: "100%", height: "160px", objectFit: "cover" }} onError={e => { e.target.style.display = "none" }} />
                       <div style={{ padding: "20px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
@@ -867,7 +882,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
                     { label: "Mis reservas", onClick: () => setModal({ tipo: "reservas" }) },
                   ].map((a, i) => (
                     <button key={i} onClick={a.onClick}
-                      style={{ padding: "10px 20px", background: "white", color: "var(--bark)", border: "1.5px solid var(--fog)", borderRadius: "10px", fontSize: "14px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all .2s" }}
+                      style={{ padding: "10px 20px", background: "var(--surface)", color: "var(--bark)", border: "1.5px solid var(--fog)", borderRadius: "10px", fontSize: "14px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all .2s" }}
                       onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--moss)"; e.currentTarget.style.color = "var(--moss)"; }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--fog)"; e.currentTarget.style.color = "var(--bark)"; }}>
                       {a.label}
@@ -1161,10 +1176,68 @@ const RegistroPage = ({ onBack }) => {
   );
 };
 
-// Íconos de tema
-const SunIcon  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
-const MoonIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
-const AutoIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l4 4"/></svg>;
+// Íconos de tema y configuración
+const SunIcon    = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
+const MoonIcon   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
+const AutoIcon   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l4 4"/></svg>;
+const GearIcon   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+
+// Panel de configuración flotante
+const ConfigPanel = ({ theme, setTheme }) => {
+  const [open, setOpen] = useState(false);
+  const themes = [
+    { key: "light", label: "Claro",      icon: <SunIcon /> },
+    { key: "dark",  label: "Oscuro",     icon: <MoonIcon /> },
+    { key: "auto",  label: "Automático", icon: <AutoIcon /> },
+  ];
+  return (
+    <div style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 3000 }}>
+      {/* Panel desplegable */}
+      {open && (
+        <div style={{
+          position: "absolute", bottom: "52px", right: 0,
+          background: "var(--surface)", border: "1px solid var(--fog)",
+          borderRadius: "14px", padding: "20px", width: "220px",
+          boxShadow: "0 8px 32px var(--shadow)", animation: "fadeUp .2s ease"
+        }}>
+          <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-muted)", marginBottom: "12px" }}>
+            Apariencia
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {themes.map(t => (
+              <button key={t.key} onClick={() => { setTheme(t.key); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: "10px",
+                  padding: "9px 12px", borderRadius: "9px", border: "none",
+                  cursor: "pointer", fontSize: "14px", fontFamily: "'DM Sans',sans-serif",
+                  fontWeight: theme === t.key ? 600 : 400, transition: "all .15s",
+                  background: theme === t.key ? "var(--bark)" : "transparent",
+                  color:      theme === t.key ? "var(--cream)" : "var(--bark)",
+                  textAlign: "left", width: "100%"
+                }}>
+                {t.icon} {t.label}
+                {theme === t.key && <span style={{ marginLeft: "auto", fontSize: "12px" }}>✓</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Botón engranaje */}
+      <button onClick={() => setOpen(v => !v)} title="Configuración"
+        style={{
+          width: "44px", height: "44px", borderRadius: "50%",
+          background: open ? "var(--bark)" : "var(--surface)",
+          border: "1px solid var(--fog)", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: open ? "var(--cream)" : "var(--bark)",
+          boxShadow: "0 4px 16px var(--shadow)", transition: "all .2s",
+          transform: open ? "rotate(45deg)" : "none"
+        }}>
+        <GearIcon />
+      </button>
+    </div>
+  );
+};
 
 // ============================================================
 // APP PRINCIPAL
@@ -1182,28 +1255,13 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  const themes = [
-    { key: "light", label: "Claro",     icon: <SunIcon /> },
-    { key: "dark",  label: "Oscuro",    icon: <MoonIcon /> },
-    { key: "auto",  label: "Automático", icon: <AutoIcon /> },
-  ];
-
   return (
     <>
       <StyleInjector />
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* Selector de tema — esquina superior derecha, siempre visible */}
-      <div style={{ position: "fixed", top: "16px", right: "16px", zIndex: 3000, display: "flex", gap: "4px", background: "var(--surface)", border: "1px solid var(--fog)", borderRadius: "10px", padding: "4px", boxShadow: "0 2px 12px var(--shadow)" }}>
-        {themes.map(t => (
-          <button key={t.key} onClick={() => setTheme(t.key)} title={t.label}
-            style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 10px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "12px", fontFamily: "'DM Sans',sans-serif", fontWeight: 500, transition: "all .2s",
-              background: theme === t.key ? "var(--bark)" : "transparent",
-              color:      theme === t.key ? "var(--cream)" : "var(--text-muted)" }}>
-            {t.icon} <span style={{ display: window.innerWidth < 500 ? "none" : "inline" }}>{t.label}</span>
-          </button>
-        ))}
-      </div>
+      {/* Panel de configuración — esquina inferior derecha, siempre visible */}
+      <ConfigPanel theme={theme} setTheme={setTheme} />
 
       {page === "login"    && <LoginPage    onLogin={u => { setUser(u); setPage("home"); }} onGoRegister={() => setPage("registro")} />}
       {page === "home"     && <HomePage     user={user} onLogout={() => { setUser(null); setPage("login"); }} showToast={showToast} />}
