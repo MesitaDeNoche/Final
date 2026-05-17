@@ -78,7 +78,18 @@ public class ContrataController {
             contrata.setFechaInicio(fechaInicio);
             contrata.setCantDias(cantDias);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(contrataDao.save(contrata));
+            Contrata saved = contrataDao.save(contrata);
+            // Devolvemos solo los datos básicos para evitar LazyInitializationException
+            // al serializar las relaciones LAZY fuera de la transacción
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "idContrata",  saved.getIdContrata(),
+                "cabanaId",    cabana.getId(),
+                "zona",        cabana.getZona(),
+                "fechaInicio", fechaInicio.toString(),
+                "cantDias",    cantDias,
+                "numPersonas", numPersonas,
+                "mensaje",     "Reserva creada con éxito"
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
