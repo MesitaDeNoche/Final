@@ -83,10 +83,14 @@ const StyleInjector = () => {
 };
 
 // ── API helper ─────────────────────────────────────────────
+// En desarrollo: __API_BASE__ = "" → el proxy de Vite resuelve /api/*
+// En producción: __API_BASE__ = VITE_API_URL (ej. https://marazul.up.railway.app)
+const API_BASE = typeof __API_BASE__ !== "undefined" ? __API_BASE__ : "";
+
 const api = async (url, opts = {}) => {
   let res;
   try {
-    res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...opts });
+    res = await fetch(`${API_BASE}${url}`, { headers: { "Content-Type": "application/json" }, ...opts });
   } catch {
     throw new Error("Nuestra página no está disponible en estos momentos. Intenta más tarde.");
   }
