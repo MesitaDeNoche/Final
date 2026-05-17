@@ -19,7 +19,7 @@ public class MvcConfig implements WebMvcConfigurer {
      * En producción: la URL de Vercel (ej. https://marazul.vercel.app)
      * Se configura vía variable de entorno CORS_ALLOWED_ORIGINS.
      */
-    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000,https://marazulfront.onrender.com}")
     private String[] allowedOrigins;
 
     @Override
