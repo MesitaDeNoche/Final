@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -66,5 +67,36 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
                 "username", usuario.getUsername(),
                 "rol", usuario.getRol().name()));
+    }
+
+    /**
+     * Endpoint de emergencia: crea o resetea el usuario admin.
+     * Protegido por una clave secreta en el body.
+     * Llamar con: POST /api/auth/setup-admin  { "clave": "marazul-setup-2025" }
+     */
+    @PostMapping("/setup-admin")
+    public ResponseEntity<?> setupAdmin(@RequestBody Map<String, String> body) {
+        final String SETUP_KEY = "marazul-setup-2025";
+        if (!SETUP_KEY.equals(body.get("clave"))) {
+            return ResponseEntity.status(403).body(Map.of("error", "Clave incorrecta."));
+        }
+
+        String username = "admin";
+        String password = "admin123";
+        String email    = "admin@marazul.com";
+
+        Optional<Usuario> existing = usuarioDao.findByUsername(username);
+        Usuario admin = existing.orElse(new Usuario());
+        admin.setUsername(username);
+        admin.setPassword(passwordEncoder.encode(password));
+        admin.setRol(Usuario.Rol.ADMIN);
+        admin.setEmail(email);
+        if (admin.getCreatedAt() == null) admin.setCreatedAt(LocalDate.now());
+        usuarioDao.save(admin);
+
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Admin listo.",
+                "username", username,
+                "password", password));
     }
 }

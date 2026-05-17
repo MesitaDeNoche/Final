@@ -45,6 +45,11 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.POST,   "/api/cabana/**").permitAll()
                         .requestMatchers(HttpMethod.PUT,    "/api/cabana/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/cabana/**").permitAll()
+                        // Empleados: gestión completa por admin
+                        .requestMatchers("/api/empleado/**").permitAll()
+                        // Entretenimientos: POST y DELETE para admin
+                        .requestMatchers(HttpMethod.POST,   "/api/entretenimiento/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/entretenimiento/**").permitAll()
                         .anyRequest().permitAll())
                 .userDetailsService(usuarioService)
                 .httpBasic(basic -> basic.disable())

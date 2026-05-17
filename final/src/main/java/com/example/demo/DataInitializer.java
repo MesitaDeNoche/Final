@@ -2,12 +2,16 @@ package com.example.demo;
 
 import com.example.demo.Modelos.DAO.ICabanaDao;
 import com.example.demo.Modelos.DAO.IEntretenimientoDao;
+import com.example.demo.Modelos.DAO.IUsuarioDao;
 import com.example.demo.Modelos.Entity.Cabana;
 import com.example.demo.Modelos.Entity.Entretenimiento;
+import com.example.demo.Modelos.Entity.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,9 +24,36 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired private ICabanaDao          cabanaDao;
     @Autowired private IEntretenimientoDao entretenimientoDao;
+    @Autowired private IUsuarioDao         usuarioDao;
+    @Autowired private PasswordEncoder     passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
+
+        // ── 0. Usuario administrador por defecto ─────────────────────────────
+        String adminUsername = "admin";
+        String adminPassword = "admin123";
+        String adminEmail    = "admin@marazul.com";
+
+        var adminOpt = usuarioDao.findByUsername(adminUsername);
+        if (adminOpt.isEmpty()) {
+            // No existe → crear
+            Usuario admin = new Usuario();
+            admin.setUsername(adminUsername);
+            admin.setPassword(passwordEncoder.encode(adminPassword));
+            admin.setRol(Usuario.Rol.ADMIN);
+            admin.setEmail(adminEmail);
+            admin.setCreatedAt(LocalDate.now());
+            usuarioDao.save(admin);
+            System.out.println("✔ Usuario admin creado  →  usuario: " + adminUsername + "  |  contraseña: " + adminPassword);
+        } else {
+            // Ya existe → forzar contraseña conocida para garantizar acceso
+            Usuario admin = adminOpt.get();
+            admin.setPassword(passwordEncoder.encode(adminPassword));
+            admin.setRol(Usuario.Rol.ADMIN);
+            usuarioDao.save(admin);
+            System.out.println("✔ Contraseña del admin reseteada  →  usuario: " + adminUsername + "  |  contraseña: " + adminPassword);
+        }
 
         // ── 1. Entretenimientos ──────────────────────────────────────────────
         if (entretenimientoDao.count() == 0) {

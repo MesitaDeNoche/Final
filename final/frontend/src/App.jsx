@@ -143,6 +143,8 @@ const GameIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="non
 const PersonIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
 const EyeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 const EyeOffIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
+const BriefcaseIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="12"/></svg>;
+const LinkIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>;
 
 // ============================================================
 // COMPONENTES BASE
@@ -495,6 +497,385 @@ const ReservasModal = ({ username, esAdmin, onClose, showToast }) => {
 };
 
 // ============================================================
+// MODAL: GESTIÓN DE EMPLEADOS (Admin)
+// ============================================================
+const EmpleadoFormModal = ({ empleado, onClose, onSaved, showToast }) => {
+  const isEdit = !!empleado?.cedula;
+  const [form, setForm] = useState({
+    nombre: empleado?.nombre || "",
+    apellido: empleado?.apellido || "",
+    email: empleado?.email || "",
+    telefono: empleado?.telefono || "",
+    fechaNacimiento: empleado?.fechaNacimiento || "",
+    salario: empleado?.salario || "",
+    descripcion: empleado?.descripcion || "",
+    idiomas: empleado?.idiomas || "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.nombre || !form.apellido || !form.email || !form.telefono || !form.fechaNacimiento) {
+      showToast("Completa los campos obligatorios.", "err"); return;
+    }
+    setLoading(true);
+    try {
+      const payload = { ...form, salario: form.salario ? Number(form.salario) : 0 };
+      if (isEdit) await api(`/api/empleado/${empleado.cedula}`, { method: "PUT", body: JSON.stringify(payload) });
+      else await api("/api/empleado", { method: "POST", body: JSON.stringify(payload) });
+      showToast(isEdit ? "Empleado actualizado." : "Empleado creado.", "ok");
+      onSaved();
+    } catch (e) { showToast(e.message, "err"); }
+    finally { setLoading(false); }
+  };
+
+  const f = (label, name, opts = {}) => (
+    <div style={{ marginBottom: "16px", gridColumn: opts.full ? "1 / -1" : "auto" }}>
+      <label style={{ display: "block", fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--bark)", marginBottom: "6px" }}>
+        {label}{opts.required && <span style={{ color: "#dc2626" }}> *</span>}
+      </label>
+      {opts.textarea ? (
+        <textarea value={form[name]} onChange={e => setForm(p => ({ ...p, [name]: e.target.value }))} rows={2}
+          placeholder={opts.placeholder || ""}
+          style={{ width: "100%", padding: "11px 14px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif", resize: "vertical" }} />
+      ) : (
+        <input type={opts.type || "text"} value={form[name]} onChange={e => setForm(p => ({ ...p, [name]: e.target.value }))}
+          placeholder={opts.placeholder || ""}
+          {...(name === "fechaNacimiento" ? { max: new Date().toISOString().split("T")[0] } : {})}
+          style={{ width: "100%", padding: "11px 14px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif" }} />
+      )}
+    </div>
+  );
+
+  return (
+    <Modal title={isEdit ? "Editar empleado" : "Nuevo empleado"} onClose={onClose} wide>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+        {f("Nombre", "nombre", { required: true, placeholder: "Juan" })}
+        {f("Apellido", "apellido", { required: true, placeholder: "Pérez" })}
+        {f("Email", "email", { required: true, placeholder: "juan@email.com", full: true })}
+        {f("Teléfono", "telefono", { required: true, placeholder: "+57 310 000 0000" })}
+        {f("Fecha de nacimiento", "fechaNacimiento", { required: true, type: "date" })}
+        {f("Salario (USD)", "salario", { type: "number", placeholder: "0" })}
+        {f("Idiomas", "idiomas", { placeholder: "Español, Inglés", full: true })}
+        {f("Descripción", "descripcion", { textarea: true, placeholder: "Rol o notas del empleado...", full: true })}
+      </div>
+      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+        <Btn variant="secondary" onClick={onClose}>Cancelar</Btn>
+        <Btn onClick={handleSave} disabled={loading}>{loading ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear empleado"}</Btn>
+      </div>
+    </Modal>
+  );
+};
+
+// ============================================================
+// MODAL: GESTIÓN DE ENTRETENIMIENTOS (Admin)
+// ============================================================
+const EntretenimientoAdminModal = ({ entretenimientos, onClose, onSaved, showToast }) => {
+  const [nombre, setNombre] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleAdd = async () => {
+    if (!nombre.trim()) { showToast("Escribe un nombre.", "err"); return; }
+    setLoading(true);
+    try {
+      await api("/api/entretenimiento", { method: "POST", body: JSON.stringify({ nombre: nombre.trim() }) });
+      showToast("Entretenimiento agregado.", "ok");
+      setNombre("");
+      onSaved();
+    } catch (e) { showToast(e.message, "err"); }
+    finally { setLoading(false); }
+  };
+
+  const handleDelete = async (id, nombre) => {
+    if (!window.confirm(`¿Eliminar "${nombre}"?`)) return;
+    try {
+      await api(`/api/entretenimiento/${id}`, { method: "DELETE" });
+      showToast("Eliminado.", "ok");
+      onSaved();
+    } catch (e) { showToast(e.message, "err"); }
+  };
+
+  return (
+    <Modal title="Gestión de entretenimientos" onClose={onClose}>
+      {/* Agregar nuevo */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
+        <input value={nombre} onChange={e => setNombre(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleAdd()}
+          placeholder="Nombre del entretenimiento..."
+          style={{ flex: 1, padding: "10px 14px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif" }} />
+        <Btn onClick={handleAdd} disabled={loading} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <PlusIcon /> Agregar
+        </Btn>
+      </div>
+
+      {/* Lista */}
+      <div style={{ maxHeight: "360px", overflowY: "auto" }}>
+        {entretenimientos.length === 0 ? (
+          <p style={{ color: "#8a7060", textAlign: "center", padding: "30px", fontSize: "15px" }}>No hay entretenimientos registrados.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {entretenimientos.map(e => (
+              <div key={e.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--fog)", borderRadius: "8px", padding: "10px 14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ color: "var(--moss)" }}><GameIcon /></span>
+                  <span style={{ fontSize: "14px", color: "var(--bark)" }}>{e.nombre}</span>
+                </div>
+                <button onClick={() => handleDelete(e.id, e.nombre)}
+                  style={{ background: "none", border: "1px solid #fca5a5", borderRadius: "6px", padding: "4px 8px", color: "#dc2626", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
+                  <TrashIcon />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
+        <Btn variant="secondary" onClick={onClose}>Cerrar</Btn>
+      </div>
+    </Modal>
+  );
+};
+
+// ============================================================
+// MODAL: ASIGNAR EMPLEADOS A CABAÑA (Admin)
+// ============================================================
+const AsignarEmpleadosModal = ({ cabana, empleados, onClose, showToast, onSaved }) => {
+  const [asignados, setAsignados] = useState((cabana.empleados || []).map(e => e.cedula));
+  const [loading, setLoading] = useState(false);
+
+  const toggle = async (emp) => {
+    const yaAsignado = asignados.includes(emp.cedula);
+    setLoading(true);
+    try {
+      if (yaAsignado) {
+        await api(`/api/empleado/${emp.cedula}/cabanas/${cabana.id}`, { method: "DELETE" });
+        setAsignados(prev => prev.filter(c => c !== emp.cedula));
+        showToast(`${emp.nombre} desasignado.`, "ok");
+      } else {
+        await api(`/api/empleado/${emp.cedula}/cabanas/${cabana.id}`, { method: "POST" });
+        setAsignados(prev => [...prev, emp.cedula]);
+        showToast(`${emp.nombre} asignado.`, "ok");
+      }
+      onSaved();
+    } catch (e) { showToast(e.message, "err"); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <Modal title={`Empleados — ${cabana.zona}`} onClose={onClose} wide>
+      <p style={{ color: "#8a7060", fontSize: "14px", marginBottom: "20px" }}>
+        Selecciona los empleados asignados a esta cabaña. Los cambios se guardan al instante.
+      </p>
+      <div style={{ maxHeight: "420px", overflowY: "auto" }}>
+        {empleados.length === 0 ? (
+          <p style={{ color: "#8a7060", textAlign: "center", padding: "30px" }}>No hay empleados registrados.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {empleados.map(emp => {
+              const asignado = asignados.includes(emp.cedula);
+              return (
+                <div key={emp.cedula}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: asignado ? "#f0fdf4" : "var(--fog)", border: `1.5px solid ${asignado ? "#86efac" : "transparent"}`, borderRadius: "10px", padding: "12px 16px", transition: "all .2s" }}>
+                  <div>
+                    <p style={{ fontSize: "15px", fontWeight: 500, color: "var(--bark)" }}>{emp.nombre} {emp.apellido}</p>
+                    <p style={{ fontSize: "12px", color: "#8a7060", marginTop: "2px" }}>{emp.email}{emp.idiomas ? ` · ${emp.idiomas}` : ""}</p>
+                  </div>
+                  <button onClick={() => toggle(emp)} disabled={loading}
+                    style={{
+                      padding: "7px 16px", borderRadius: "8px", fontSize: "13px", cursor: loading ? "not-allowed" : "pointer",
+                      fontFamily: "'DM Sans',sans-serif", fontWeight: 500, border: "none", transition: "all .2s",
+                      background: asignado ? "var(--moss)" : "var(--bark)",
+                      color: "white"
+                    }}>
+                    {asignado ? "✓ Asignado" : "+ Asignar"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
+        <Btn variant="secondary" onClick={onClose}>Cerrar</Btn>
+      </div>
+    </Modal>
+  );
+};
+
+// ============================================================
+// PÁGINA: PANEL DE ADMINISTRACIÓN (empleados + entretenimientos)
+// ============================================================
+const AdminPanel = ({ empleados, entretenimientos, cabanas, showToast, onRefreshEmpleados, onRefreshEntretenimientos, onRefreshCabanas, setModal }) => {
+  const [tab, setTab] = useState("empleados");
+
+  return (
+    <div>
+      {/* Hero */}
+      <div style={{ background: "linear-gradient(135deg, var(--bark) 0%, #5a3d2b 60%, var(--moss) 100%)", padding: "48px 40px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "280px", height: "280px", borderRadius: "50%", background: "rgba(200,169,110,0.08)" }} />
+        <div style={{ position: "relative", zIndex: 1, animation: "fadeUp .6s ease both" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--gold)", marginBottom: "10px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.15em" }}>
+            <BriefcaseIcon /> Panel de administración
+          </div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--cream)", fontSize: "38px", fontWeight: 300, lineHeight: 1.2 }}>
+            Gestión del sistema
+          </h1>
+          <p style={{ color: "rgba(245,239,230,0.6)", marginTop: "8px", fontSize: "15px" }}>
+            Administra empleados, entretenimientos y asignaciones de cabañas.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ padding: "32px 40px", maxWidth: "1200px", margin: "0 auto" }}>
+        {/* Tabs */}
+        <div style={{ display: "flex", borderBottom: "1px solid var(--fog)", marginBottom: "28px", gap: "4px" }}>
+          {[
+            { id: "empleados", label: `Empleados (${empleados.length})` },
+            { id: "entretenimientos", label: `Entretenimientos (${entretenimientos.length})` },
+            { id: "asignaciones", label: "Asignaciones" },
+          ].map(t => (
+            <button key={t.id} className={`tab-btn${tab === t.id ? " active" : ""}`} onClick={() => setTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── TAB: EMPLEADOS ── */}
+        {tab === "empleados" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "24px", fontWeight: 400, color: "var(--bark)" }}>Empleados</h2>
+              <Btn onClick={() => setModal({ tipo: "empleado", data: null })} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <PlusIcon /> Nuevo empleado
+              </Btn>
+            </div>
+            {empleados.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px", color: "#8a7060" }}>
+                <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "22px", marginBottom: "8px" }}>Sin empleados</p>
+                <p style={{ fontSize: "14px" }}>Agrega el primer empleado con el botón de arriba.</p>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+                {empleados.map((emp, i) => (
+                  <div key={emp.cedula} style={{ background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--fog)", padding: "20px", boxShadow: "0 2px 8px var(--shadow)", animation: `fadeUp .4s ease ${i * .05}s both` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+                      <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "var(--moss)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "16px", fontWeight: 600, flexShrink: 0 }}>
+                        {emp.nombre?.[0]?.toUpperCase()}
+                      </div>
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <button onClick={() => setModal({ tipo: "empleado", data: emp })}
+                          style={{ padding: "6px 10px", background: "var(--bark)", color: "var(--cream)", border: "none", borderRadius: "6px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
+                          <EditIcon />
+                        </button>
+                        <button onClick={async () => {
+                          if (!window.confirm(`¿Eliminar a ${emp.nombre} ${emp.apellido}?`)) return;
+                          try { await api(`/api/empleado/${emp.cedula}`, { method: "DELETE" }); showToast("Empleado eliminado.", "ok"); onRefreshEmpleados(); }
+                          catch (e) { showToast(e.message, "err"); }
+                        }}
+                          style={{ padding: "6px 10px", background: "transparent", color: "#dc2626", border: "1px solid #fca5a5", borderRadius: "6px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    </div>
+                    <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "18px", fontWeight: 500, color: "var(--bark)", marginBottom: "4px" }}>{emp.nombre} {emp.apellido}</p>
+                    <p style={{ fontSize: "13px", color: "#8a7060", marginBottom: "4px" }}>{emp.email}</p>
+                    {emp.telefono && <p style={{ fontSize: "12px", color: "#b0a090" }}>{emp.telefono}</p>}
+                    {emp.idiomas && <p style={{ fontSize: "12px", color: "var(--sky)", marginTop: "6px" }}>🌐 {emp.idiomas}</p>}
+                    {emp.salario > 0 && <p style={{ fontSize: "12px", color: "var(--moss)", marginTop: "4px" }}>💰 ${Number(emp.salario).toLocaleString("es-CO")}</p>}
+                    {emp.descripcion && <p style={{ fontSize: "12px", color: "#8a7060", marginTop: "6px", fontStyle: "italic" }}>{emp.descripcion}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB: ENTRETENIMIENTOS ── */}
+        {tab === "entretenimientos" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "24px", fontWeight: 400, color: "var(--bark)" }}>Entretenimientos</h2>
+              <Btn onClick={() => setModal({ tipo: "entretenimiento" })} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <PlusIcon /> Gestionar
+              </Btn>
+            </div>
+            {entretenimientos.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px", color: "#8a7060" }}>
+                <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "22px", marginBottom: "8px" }}>Sin entretenimientos</p>
+                <p style={{ fontSize: "14px" }}>Agrega actividades para asignarlas a las cabañas.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
+                {entretenimientos.map((e, i) => (
+                  <div key={e.id} style={{ display: "flex", alignItems: "center", gap: "10px", background: "var(--surface)", border: "1px solid var(--fog)", borderRadius: "30px", padding: "10px 18px", boxShadow: "0 1px 4px var(--shadow)", animation: `fadeUp .4s ease ${i * .04}s both` }}>
+                    <span style={{ color: "var(--moss)" }}><GameIcon /></span>
+                    <span style={{ fontSize: "14px", color: "var(--bark)", fontWeight: 500 }}>{e.nombre}</span>
+                    <button onClick={async () => {
+                      if (!window.confirm(`¿Eliminar "${e.nombre}"?`)) return;
+                      try { await api(`/api/entretenimiento/${e.id}`, { method: "DELETE" }); showToast("Eliminado.", "ok"); onRefreshEntretenimientos(); }
+                      catch (err) { showToast(err.message, "err"); }
+                    }}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#dc2626", display: "flex", alignItems: "center", padding: "2px" }}>
+                      <TrashIcon />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB: ASIGNACIONES ── */}
+        {tab === "asignaciones" && (
+          <div>
+            <div style={{ marginBottom: "20px" }}>
+              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "24px", fontWeight: 400, color: "var(--bark)", marginBottom: "6px" }}>Asignación de empleados a cabañas</h2>
+              <p style={{ color: "#8a7060", fontSize: "14px" }}>Haz clic en "Gestionar" para asignar o desasignar empleados de cada cabaña.</p>
+            </div>
+            {cabanas.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px", color: "#8a7060" }}>
+                <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "22px", marginBottom: "8px" }}>Sin cabañas</p>
+                <p style={{ fontSize: "14px" }}>Crea cabañas primero desde la sección Cabañas.</p>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
+                {cabanas.map((cab, i) => {
+                  const empsAsignados = cab.empleados || [];
+                  return (
+                    <div key={cab.id} style={{ background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--fog)", overflow: "hidden", boxShadow: "0 2px 8px var(--shadow)", animation: `fadeUp .4s ease ${i * .05}s both` }}>
+                      <img src={getFoto(cab)} alt={cab.zona} style={{ width: "100%", height: "120px", objectFit: "cover" }} onError={e => { e.target.style.display = "none" }} />
+                      <div style={{ padding: "16px" }}>
+                        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "18px", fontWeight: 500, color: "var(--bark)", marginBottom: "6px" }}>{cab.zona}</p>
+                        <p style={{ fontSize: "12px", color: "#8a7060", marginBottom: "10px" }}>
+                          {empsAsignados.length === 0 ? "Sin empleados asignados" : `${empsAsignados.length} empleado${empsAsignados.length !== 1 ? "s" : ""} asignado${empsAsignados.length !== 1 ? "s" : ""}`}
+                        </p>
+                        {empsAsignados.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "10px" }}>
+                            {empsAsignados.slice(0, 3).map(emp => (
+                              <span key={emp.cedula} style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", background: "#f0fdf4", color: "#166534", border: "1px solid #86efac" }}>
+                                {emp.nombre}
+                              </span>
+                            ))}
+                            {empsAsignados.length > 3 && <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", background: "var(--fog)", color: "#8a7060" }}>+{empsAsignados.length - 3}</span>}
+                          </div>
+                        )}
+                        <Btn onClick={() => setModal({ tipo: "asignar", data: cab })} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                          <LinkIcon /> Gestionar empleados
+                        </Btn>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
 // SECCIÓN: CATÁLOGO DE CABAÑAS (página explorar)
 // ============================================================
 const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRefresh, entretenimientos, onEditar, onEliminar }) => {
@@ -688,9 +1069,10 @@ const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRef
 // ============================================================
 const HomePage = ({ user, onLogout, showToast }) => {
   const esAdmin = user?.rol === "ADMIN";
-  const [paginaActual, setPaginaActual] = useState("dashboard"); // "dashboard" | "catalogo"
+  const [paginaActual, setPaginaActual] = useState("dashboard"); // "dashboard" | "catalogo" | "admin"
   const [cabanas, setCabanas] = useState([]);
   const [entretenimientos, setEntretenimientos] = useState([]);
+  const [empleados, setEmpleados] = useState([]);
   const [stats, setStats] = useState(null);
   const [loadingCab, setLoadingCab] = useState(true);
   const [modal, setModal] = useState(null);
@@ -704,18 +1086,23 @@ const HomePage = ({ user, onLogout, showToast }) => {
 
   const cargarEntretenimientos = async () => {
     try { setEntretenimientos(await api("/api/entretenimiento")); }
-    catch { /* silencioso */ } //esto es para que no se rompa la aplicacion si no hay entretenimientos
+    catch { /* silencioso */ }
+  };
+
+  const cargarEmpleados = async () => {
+    try { setEmpleados(await api("/api/empleado")); }
+    catch { /* silencioso */ }
   };
 
   const cargarStats = async () => {
     try { setStats(await api("/api/contrata/stats")); }
-    catch { /* silencioso */ } //esto es para que no se rompa la aplicacion si no hay stats
+    catch { /* silencioso */ }
   };
 
   useEffect(() => {
     cargarCabanas();
     cargarEntretenimientos();
-    if (esAdmin) cargarStats();
+    if (esAdmin) { cargarStats(); cargarEmpleados(); }
   }, []);
 
   const eliminarCabana = async (cab) => {
@@ -733,7 +1120,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
       { label: "Cabañas", value: stats ? String(stats.totalCabanas) : "…", color: "var(--moss)" },
       { label: "Reservas totales", value: stats ? String(stats.totalReservas) : "…", color: "var(--sky)" },
       { label: "Clientes", value: stats ? String(stats.totalClientes) : "…", color: "var(--gold)" },
-      { label: "Entretenimientos", value: String(entretenimientos.length), color: "var(--bark)" },
+      { label: "Empleados", value: String(empleados.length), color: "var(--bark)" },
     ]
     : [
       { label: "Cabañas disponibles", value: String(cabanas.length), color: "var(--moss)" },
@@ -757,7 +1144,11 @@ const HomePage = ({ user, onLogout, showToast }) => {
           </div>
           {/* Tabs de navegación */}
           <nav style={{ display: "flex", gap: "4px" }}>
-            {[{ id: "dashboard", label: "Dashboard" }, { id: "catalogo", label: "Cabañas" }].map(t => (
+            {[
+              { id: "dashboard", label: "Dashboard" },
+              { id: "catalogo", label: "Cabañas" },
+              ...(esAdmin ? [{ id: "admin", label: "Administración" }] : []),
+            ].map(t => (
               <button key={t.id} onClick={() => setPaginaActual(t.id)}
                 style={{
                   padding: "6px 16px", borderRadius: "8px", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all .2s",
@@ -811,8 +1202,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
                   style={{ marginTop: "20px", padding: "12px 28px", background: "var(--gold)", color: "var(--bark)", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
                   Explorar cabañas →
                 </button>
-              )}
-            </div>
+              )}            </div>
           </div>
 
           <main style={{ padding: "40px", maxWidth: "1200px", margin: "0 auto" }}>
@@ -910,6 +1300,20 @@ const HomePage = ({ user, onLogout, showToast }) => {
         />
       )}
 
+      {/* PÁGINA: ADMINISTRACIÓN (solo admin) */}
+      {paginaActual === "admin" && esAdmin && (
+        <AdminPanel
+          empleados={empleados}
+          entretenimientos={entretenimientos}
+          cabanas={cabanas}
+          showToast={showToast}
+          onRefreshEmpleados={cargarEmpleados}
+          onRefreshEntretenimientos={cargarEntretenimientos}
+          onRefreshCabanas={cargarCabanas}
+          setModal={setModal}
+        />
+      )}
+
       {/* Modales */}
       {modal?.tipo === "cabana" && (
         <CabanaFormModal
@@ -922,6 +1326,31 @@ const HomePage = ({ user, onLogout, showToast }) => {
       )}
       {modal?.tipo === "reservas" && (
         <ReservasModal username={user?.username} esAdmin={esAdmin} onClose={() => setModal(null)} showToast={showToast} />
+      )}
+      {modal?.tipo === "empleado" && (
+        <EmpleadoFormModal
+          empleado={modal.data}
+          onClose={() => setModal(null)}
+          showToast={showToast}
+          onSaved={() => { setModal(null); cargarEmpleados(); }}
+        />
+      )}
+      {modal?.tipo === "entretenimiento" && (
+        <EntretenimientoAdminModal
+          entretenimientos={entretenimientos}
+          onClose={() => setModal(null)}
+          showToast={showToast}
+          onSaved={cargarEntretenimientos}
+        />
+      )}
+      {modal?.tipo === "asignar" && (
+        <AsignarEmpleadosModal
+          cabana={modal.data}
+          empleados={empleados}
+          onClose={() => setModal(null)}
+          showToast={showToast}
+          onSaved={cargarCabanas}
+        />
       )}
     </div>
   );

@@ -2,7 +2,9 @@ package com.example.demo.Controllers;
 
 import com.example.demo.Modelos.DAO.ICabanaDao;
 import com.example.demo.Modelos.DAO.IEntretenimientoDao;
+import com.example.demo.Modelos.DAO.IEmpleadoDao;
 import com.example.demo.Modelos.Entity.Cabana;
+import com.example.demo.Modelos.Entity.Empleado;
 import com.example.demo.Modelos.Entity.Entretenimiento;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,8 @@ public class CabanaController {
     private ICabanaDao cabanaDao;
     @Autowired
     private IEntretenimientoDao entretenimientoDao;
+    @Autowired
+    private IEmpleadoDao empleadoDao;
 
     @GetMapping
     public List<Cabana> getAll() {
@@ -90,6 +94,17 @@ public class CabanaController {
                     .filter(e -> e != null)
                     .toList();
             c.setEntretenimientos(ents);
+        }
+
+        // Relación empleados: viene como lista de cédulas [1001, 1002]
+        if (body.containsKey("empleadoIds")) {
+            @SuppressWarnings("unchecked")
+            List<Integer> ids = (List<Integer>) body.get("empleadoIds");
+            List<Empleado> emps = ids.stream()
+                    .map(id -> empleadoDao.findById(Long.valueOf(id)).orElse(null))
+                    .filter(e -> e != null)
+                    .toList();
+            c.setEmpleados(emps);
         }
         return c;
     }

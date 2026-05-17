@@ -23,6 +23,9 @@ public interface ICabanaDao extends JpaRepository<Cabana, Long> {
 
     List<Cabana> findByCategoriaIgnoreCase(String categoria);
 
+    // Cabañas asignadas a un empleado específico
+    List<Cabana> findByEmpleadosCedula(Long cedula);
+
     // findById ya existe en JpaRepository → devuelve Optional<Cabana>
     // deleteById ya existe en JpaRepository
 }
