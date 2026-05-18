@@ -54,7 +54,7 @@ public class Usuario {
     private String email;
 
     public enum Rol {
-        ADMIN, CLIENTE
+        ADMIN, CLIENTE, EMPLEADO
     }
 
     public Usuario() {

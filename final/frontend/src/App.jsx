@@ -1068,8 +1068,11 @@ const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRef
 // HOME / DASHBOARD
 // ============================================================
 const HomePage = ({ user, onLogout, showToast }) => {
-  const esAdmin = user?.rol === "ADMIN";
-  const [paginaActual, setPaginaActual] = useState("dashboard"); // "dashboard" | "catalogo" | "admin"
+  const esAdmin    = user?.rol === "ADMIN";
+  const esEmpleado = user?.rol === "EMPLEADO";
+  const esCliente  = !esAdmin && !esEmpleado;
+
+  const [paginaActual, setPaginaActual] = useState("dashboard");
   const [cabanas, setCabanas] = useState([]);
   const [entretenimientos, setEntretenimientos] = useState([]);
   const [empleados, setEmpleados] = useState([]);
@@ -1102,7 +1105,8 @@ const HomePage = ({ user, onLogout, showToast }) => {
   useEffect(() => {
     cargarCabanas();
     cargarEntretenimientos();
-    if (esAdmin) { cargarStats(); cargarEmpleados(); }
+    if (esAdmin)    { cargarStats(); cargarEmpleados(); }
+    if (esEmpleado) { cargarEmpleados(); }
   }, []);
 
   const eliminarCabana = async (cab) => {
@@ -1115,19 +1119,42 @@ const HomePage = ({ user, onLogout, showToast }) => {
     } catch (e) { showToast(e.message, "err"); }
   };
 
+  // Badge de rol en navbar
+  const rolBadge = esAdmin
+    ? { label: "Admin",    bg: "#fef3c7", color: "#92400e" }
+    : esEmpleado
+    ? { label: "Empleado", bg: "#ede9fe", color: "#5b21b6" }
+    : { label: "Cliente",  bg: "var(--fog)", color: "#8a7060" };
+
+  // Stats según rol
   const statsCards = esAdmin
     ? [
-      { label: "Cabañas", value: stats ? String(stats.totalCabanas) : "…", color: "var(--moss)" },
-      { label: "Reservas totales", value: stats ? String(stats.totalReservas) : "…", color: "var(--sky)" },
-      { label: "Clientes", value: stats ? String(stats.totalClientes) : "…", color: "var(--gold)" },
-      { label: "Empleados", value: String(empleados.length), color: "var(--bark)" },
-    ]
+        { label: "Cabañas",          value: stats ? String(stats.totalCabanas)  : "…", color: "var(--moss)" },
+        { label: "Reservas totales", value: stats ? String(stats.totalReservas) : "…", color: "var(--sky)"  },
+        { label: "Clientes",         value: stats ? String(stats.totalClientes) : "…", color: "var(--gold)" },
+        { label: "Empleados",        value: String(empleados.length),                  color: "var(--bark)" },
+      ]
+    : esEmpleado
+    ? [
+        { label: "Total cabañas",    value: String(cabanas.length),                                         color: "var(--moss)" },
+        { label: "Entretenimientos", value: String(entretenimientos.length),                                 color: "var(--gold)" },
+        { label: "Compañeros",       value: String(empleados.length),                                       color: "#7c3aed"     },
+        { label: "Zonas",            value: String(new Set(cabanas.map(c => c.zona)).size),                  color: "var(--sky)"  },
+      ]
     : [
-      { label: "Cabañas disponibles", value: String(cabanas.length), color: "var(--moss)" },
-      { label: "Premium", value: String(cabanas.filter(c => c.categoria === "Premium").length), color: "var(--gold)" },
-      { label: "Estándar", value: String(cabanas.filter(c => c.categoria === "Estándar").length), color: "var(--sky)" },
-      { label: "Suites", value: String(cabanas.filter(c => c.categoria === "Suite").length), color: "var(--bark)" },
-    ];
+        { label: "Cabañas disponibles", value: String(cabanas.length),                                              color: "var(--moss)" },
+        { label: "Premium",             value: String(cabanas.filter(c => c.categoria === "Premium").length),        color: "var(--gold)" },
+        { label: "Estándar",            value: String(cabanas.filter(c => c.categoria === "Estándar").length),       color: "var(--sky)"  },
+        { label: "Suites",              value: String(cabanas.filter(c => c.categoria === "Suite").length),          color: "var(--bark)" },
+      ];
+
+  // Tabs según rol
+  const navTabs = [
+    { id: "dashboard", label: "Dashboard" },
+    { id: "catalogo",  label: "Cabañas"   },
+    ...(esAdmin    ? [{ id: "admin",      label: "Administración" }] : []),
+    ...(esEmpleado ? [{ id: "misCabanas", label: "Mis Cabañas"   }] : []),
+  ];
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream)", fontFamily: "'DM Sans',sans-serif" }}>
@@ -1138,23 +1165,19 @@ const HomePage = ({ user, onLogout, showToast }) => {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{ width: "32px", height: "32px", background: "var(--bark)", borderRadius: "7px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gold)" }}><MountainIcon /></div>
             <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "20px", fontWeight: 600, color: "var(--bark)" }}>Mar Azul</span>
-            <span style={{ padding: "2px 10px", background: "var(--fog)", borderRadius: "20px", fontSize: "11px", fontWeight: 500, color: "#8a7060", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              {esAdmin ? "Admin" : "Cliente"}
+            <span style={{ padding: "2px 10px", background: rolBadge.bg, borderRadius: "20px", fontSize: "11px", fontWeight: 500, color: rolBadge.color, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              {rolBadge.label}
             </span>
           </div>
           {/* Tabs de navegación */}
           <nav style={{ display: "flex", gap: "4px" }}>
-            {[
-              { id: "dashboard", label: "Dashboard" },
-              { id: "catalogo", label: "Cabañas" },
-              ...(esAdmin ? [{ id: "admin", label: "Administración" }] : []),
-            ].map(t => (
+            {navTabs.map(t => (
               <button key={t.id} onClick={() => setPaginaActual(t.id)}
                 style={{
                   padding: "6px 16px", borderRadius: "8px", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all .2s",
                   background: paginaActual === t.id ? "var(--fog)" : "transparent",
-                  color: paginaActual === t.id ? "var(--bark)" : "#8a7060",
-                  fontWeight: paginaActual === t.id ? 500 : 400
+                  color:      paginaActual === t.id ? "var(--bark)" : "#8a7060",
+                  fontWeight: paginaActual === t.id ? 500 : 400,
                 }}>
                 {t.label}
               </button>
@@ -1165,10 +1188,10 @@ const HomePage = ({ user, onLogout, showToast }) => {
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <button onClick={() => setModal({ tipo: "reservas" })}
             style={{ padding: "7px 16px", background: "transparent", border: "1px solid var(--fog)", borderRadius: "8px", color: "#8a7060", cursor: "pointer", fontSize: "13px", fontFamily: "'DM Sans',sans-serif" }}>
-            {esAdmin ? "Ver reservas" : "Mis reservas"}
+            {esAdmin || esEmpleado ? "Ver reservas" : "Mis reservas"}
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--moss)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "13px", fontWeight: 500 }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: esAdmin ? "var(--bark)" : esEmpleado ? "#7c3aed" : "var(--moss)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "13px", fontWeight: 500 }}>
               {user?.username?.[0]?.toUpperCase()}
             </div>
             <span style={{ fontSize: "14px", color: "var(--bark)", fontWeight: 500 }}>{user?.username}</span>
@@ -1192,17 +1215,24 @@ const HomePage = ({ user, onLogout, showToast }) => {
                 {new Date().toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </p>
               <h1 style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--cream)", fontSize: "38px", fontWeight: 300, lineHeight: 1.2 }}>
-                {esAdmin ? "Panel de administración" : `Hola de nuevo, ${user?.username}`}
+                {esAdmin ? "Panel de administración" : esEmpleado ? `Bienvenido, ${user?.username}` : `Hola de nuevo, ${user?.username}`}
               </h1>
               <p style={{ color: "rgba(245,239,230,0.6)", marginTop: "8px", fontSize: "15px" }}>
-                {esAdmin ? "Gestiona cabañas, reservas y entretenimientos." : "Explora nuestras cabañas y haz tu reserva."}
+                {esAdmin ? "Gestiona cabañas, reservas, empleados y entretenimientos." : esEmpleado ? "Consulta las cabañas del complejo y las reservas activas." : "Explora nuestras cabañas y haz tu reserva."}
               </p>
-              {!esAdmin && (
+              {esCliente && (
                 <button onClick={() => setPaginaActual("catalogo")}
                   style={{ marginTop: "20px", padding: "12px 28px", background: "var(--gold)", color: "var(--bark)", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
                   Explorar cabañas →
                 </button>
-              )}            </div>
+              )}
+              {esEmpleado && (
+                <button onClick={() => setPaginaActual("misCabanas")}
+                  style={{ marginTop: "20px", padding: "12px 28px", background: "var(--gold)", color: "var(--bark)", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                  Ver cabañas →
+                </button>
+              )}
+            </div>
           </div>
 
           <main style={{ padding: "40px", maxWidth: "1200px", margin: "0 auto" }}>
@@ -1251,6 +1281,8 @@ const HomePage = ({ user, onLogout, showToast }) => {
                               <Btn onClick={() => setModal({ tipo: "cabana", data: cab })} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}><EditIcon /> Editar</Btn>
                               <Btn variant="danger" onClick={() => eliminarCabana(cab)} style={{ display: "flex", alignItems: "center", gap: "6px" }}><TrashIcon /></Btn>
                             </>
+                          ) : esEmpleado ? (
+                            <Btn variant="secondary" onClick={() => setPaginaActual("misCabanas")} style={{ flex: 1 }}>Ver detalle</Btn>
                           ) : (
                             <Btn variant="moss" onClick={() => setPaginaActual("catalogo")} style={{ flex: 1 }}>Ver y reservar</Btn>
                           )}
@@ -1262,18 +1294,21 @@ const HomePage = ({ user, onLogout, showToast }) => {
               </div>
             )}
 
-            {/* Acciones rápidas cliente */}
-            {!esAdmin && (
+            {/* Acciones rápidas */}
+            {(esCliente || esEmpleado) && (
               <div style={{ marginTop: "40px" }}>
                 <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "26px", fontWeight: 400, color: "var(--bark)", marginBottom: "16px" }}>Acciones rápidas</h2>
                 <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                  {[
+                  {(esCliente ? [
                     { label: "Explorar cabañas", onClick: () => setPaginaActual("catalogo") },
-                    { label: "Mis reservas", onClick: () => setModal({ tipo: "reservas" }) },
-                  ].map((a, i) => (
+                    { label: "Mis reservas",     onClick: () => setModal({ tipo: "reservas" }) },
+                  ] : [
+                    { label: "Ver cabañas",  onClick: () => setPaginaActual("misCabanas") },
+                    { label: "Ver reservas", onClick: () => setModal({ tipo: "reservas" }) },
+                  ]).map((a, i) => (
                     <button key={i} onClick={a.onClick}
                       style={{ padding: "10px 20px", background: "var(--surface)", color: "var(--bark)", border: "1.5px solid var(--fog)", borderRadius: "10px", fontSize: "14px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all .2s" }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--moss)"; e.currentTarget.style.color = "var(--moss)"; }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = esEmpleado ? "#7c3aed" : "var(--moss)"; e.currentTarget.style.color = esEmpleado ? "#7c3aed" : "var(--moss)"; }}
                       onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--fog)"; e.currentTarget.style.color = "var(--bark)"; }}>
                       {a.label}
                     </button>
@@ -1285,7 +1320,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
         </>
       )}
 
-      {/* PÁGINA: CATÁLOGO */}
+      {/* PÁGINA: CATÁLOGO (cliente y admin) */}
       {paginaActual === "catalogo" && (
         <CatalogoCabanas
           cabanas={cabanas}
@@ -1298,6 +1333,66 @@ const HomePage = ({ user, onLogout, showToast }) => {
           onEditar={cab => setModal({ tipo: "cabana", data: cab })}
           onEliminar={eliminarCabana}
         />
+      )}
+
+      {/* PÁGINA: MIS CABAÑAS (empleado — solo lectura) */}
+      {paginaActual === "misCabanas" && esEmpleado && (
+        <div>
+          <div style={{ background: "linear-gradient(135deg, #4c1d95 0%, #6d28d9 60%, var(--moss) 100%)", padding: "48px 40px", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "280px", height: "280px", borderRadius: "50%", background: "rgba(200,169,110,0.08)" }} />
+            <div style={{ position: "relative", zIndex: 1, animation: "fadeUp .6s ease both" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--gold)", marginBottom: "10px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.15em" }}>
+                <BriefcaseIcon /> Vista de empleado
+              </div>
+              <h1 style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--cream)", fontSize: "38px", fontWeight: 300 }}>Cabañas del complejo</h1>
+              <p style={{ color: "rgba(245,239,230,0.6)", marginTop: "8px", fontSize: "15px" }}>Consulta la información de todas las cabañas, entretenimientos y equipo asignado.</p>
+            </div>
+          </div>
+          <div style={{ padding: "32px 40px", maxWidth: "1200px", margin: "0 auto" }}>
+            {loadingCab ? (
+              <p style={{ color: "#8a7060", textAlign: "center", padding: "60px" }}>Cargando...</p>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" }}>
+                {cabanas.map((cab, i) => {
+                  const cc = catColor(cab.categoria);
+                  const ents = cab.entretenimientos || [];
+                  const emps = cab.empleados || [];
+                  return (
+                    <div key={cab.id} style={{ background: "var(--surface)", borderRadius: "14px", overflow: "hidden", border: "1px solid var(--fog)", boxShadow: "0 2px 8px var(--shadow)", animation: `fadeUp .4s ease ${i * .05}s both` }}>
+                      <img src={getFoto(cab)} alt={cab.zona} style={{ width: "100%", height: "150px", objectFit: "cover" }} onError={e => { e.target.style.display = "none" }} />
+                      <div style={{ padding: "16px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                          <div>
+                            <span style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "20px", background: cc.bg, color: cc.text, fontWeight: 500 }}>{cab.categoria}</span>
+                            <h3 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "19px", fontWeight: 500, color: "var(--bark)", marginTop: "5px" }}>{cab.zona}</h3>
+                          </div>
+                          {cab.precioNoche > 0 && <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "15px", fontWeight: 600, color: "var(--moss)" }}>${cab.precioNoche}/noche</p>}
+                        </div>
+                        {cab.descripcion && <p style={{ fontSize: "12px", color: "#8a7060", marginBottom: "8px", lineHeight: 1.5 }}>{cab.descripcion}</p>}
+                        <p style={{ fontSize: "12px", color: "#8a7060", marginBottom: "8px" }}>👥 Hasta {cab.cantidadPersonas} personas</p>
+                        {ents.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "8px" }}>
+                            {ents.map(e => <span key={e.id} style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", background: "var(--fog)", color: "#6a5040" }}>{e.nombre}</span>)}
+                          </div>
+                        )}
+                        {emps.length > 0 && (
+                          <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--fog)" }}>
+                            <p style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#b0a090", marginBottom: "5px" }}>Equipo asignado</p>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                              {emps.map(e => (
+                                <span key={e.cedula} style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", background: "#ede9fe", color: "#5b21b6" }}>{e.nombre} {e.apellido}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* PÁGINA: ADMINISTRACIÓN (solo admin) */}
@@ -1325,7 +1420,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
         />
       )}
       {modal?.tipo === "reservas" && (
-        <ReservasModal username={user?.username} esAdmin={esAdmin} onClose={() => setModal(null)} showToast={showToast} />
+        <ReservasModal username={user?.username} esAdmin={esAdmin || esEmpleado} onClose={() => setModal(null)} showToast={showToast} />
       )}
       {modal?.tipo === "empleado" && (
         <EmpleadoFormModal

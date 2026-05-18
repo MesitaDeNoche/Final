@@ -99,4 +99,34 @@ public class AuthController {
                 "username", username,
                 "password", password));
     }
+
+    /**
+     * Endpoint de emergencia: crea o resetea el usuario empleado de prueba.
+     * Llamar con: POST /api/auth/setup-empleado  { "clave": "marazul-setup-2025" }
+     */
+    @PostMapping("/setup-empleado")
+    public ResponseEntity<?> setupEmpleado(@RequestBody Map<String, String> body) {
+        final String SETUP_KEY = "marazul-setup-2025";
+        if (!SETUP_KEY.equals(body.get("clave"))) {
+            return ResponseEntity.status(403).body(Map.of("error", "Clave incorrecta."));
+        }
+
+        String username = "empleado1";
+        String password = "empleado123";
+        String email    = "empleado1@marazul.com";
+
+        Optional<Usuario> existing = usuarioDao.findByUsername(username);
+        Usuario emp = existing.orElse(new Usuario());
+        emp.setUsername(username);
+        emp.setPassword(passwordEncoder.encode(password));
+        emp.setRol(Usuario.Rol.EMPLEADO);
+        emp.setEmail(email);
+        if (emp.getCreatedAt() == null) emp.setCreatedAt(LocalDate.now());
+        usuarioDao.save(emp);
+
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Empleado listo.",
+                "username", username,
+                "password", password));
+    }
 }

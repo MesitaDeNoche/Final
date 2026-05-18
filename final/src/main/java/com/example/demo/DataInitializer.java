@@ -30,14 +30,15 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        // ── 0. Usuario administrador por defecto ─────────────────────────────
+        // ── 0. Usuarios por defecto ──────────────────────────────────────────
+
+        // Admin
         String adminUsername = "admin";
         String adminPassword = "admin123";
         String adminEmail    = "admin@marazul.com";
 
         var adminOpt = usuarioDao.findByUsername(adminUsername);
         if (adminOpt.isEmpty()) {
-            // No existe → crear
             Usuario admin = new Usuario();
             admin.setUsername(adminUsername);
             admin.setPassword(passwordEncoder.encode(adminPassword));
@@ -47,12 +48,35 @@ public class DataInitializer implements CommandLineRunner {
             usuarioDao.save(admin);
             System.out.println("✔ Usuario admin creado  →  usuario: " + adminUsername + "  |  contraseña: " + adminPassword);
         } else {
-            // Ya existe → forzar contraseña conocida para garantizar acceso
+            // Forzar contraseña conocida y rol correcto
             Usuario admin = adminOpt.get();
             admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRol(Usuario.Rol.ADMIN);
             usuarioDao.save(admin);
-            System.out.println("✔ Contraseña del admin reseteada  →  usuario: " + adminUsername + "  |  contraseña: " + adminPassword);
+            System.out.println("✔ Admin reseteado  →  usuario: " + adminUsername + "  |  contraseña: " + adminPassword);
+        }
+
+        // Empleado de prueba
+        String empUsername = "empleado1";
+        String empPassword = "empleado123";
+        String empEmail    = "empleado1@marazul.com";
+
+        var empOpt = usuarioDao.findByUsername(empUsername);
+        if (empOpt.isEmpty()) {
+            Usuario emp = new Usuario();
+            emp.setUsername(empUsername);
+            emp.setPassword(passwordEncoder.encode(empPassword));
+            emp.setRol(Usuario.Rol.EMPLEADO);
+            emp.setEmail(empEmail);
+            emp.setCreatedAt(LocalDate.now());
+            usuarioDao.save(emp);
+            System.out.println("✔ Usuario empleado creado  →  usuario: " + empUsername + "  |  contraseña: " + empPassword);
+        } else {
+            Usuario emp = empOpt.get();
+            emp.setPassword(passwordEncoder.encode(empPassword));
+            emp.setRol(Usuario.Rol.EMPLEADO);
+            usuarioDao.save(emp);
+            System.out.println("✔ Empleado reseteado  →  usuario: " + empUsername + "  |  contraseña: " + empPassword);
         }
 
         // ── 1. Entretenimientos ──────────────────────────────────────────────
