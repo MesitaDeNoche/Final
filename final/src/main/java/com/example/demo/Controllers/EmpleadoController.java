@@ -2,8 +2,12 @@ package com.example.demo.Controllers;
 
 import com.example.demo.Modelos.DAO.IEmpleadoDao;
 import com.example.demo.Modelos.DAO.ICabanaDao;
+import com.example.demo.Modelos.DAO.IUsuarioDao;
 import com.example.demo.Modelos.Entity.Empleado;
 import com.example.demo.Modelos.Entity.Cabana;
+import com.example.demo.Modelos.Entity.Usuario;
+import com.example.demo.Modelos.Entity.Usuario.Rol;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +29,12 @@ public class EmpleadoController {
     @Autowired
     private ICabanaDao cabanaDao;
 
+    @Autowired
+    private IUsuarioDao usuarioDao;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     // ── GET todos los empleados ──────────────────────────────────
     @GetMapping
     public List<Empleado> getAll() {
@@ -40,12 +50,34 @@ public class EmpleadoController {
     }
 
     // ── POST crear empleado ──────────────────────────────────────
+    //Se agregó la creación del usuario asociado al empleado, con validaciones para username y password, y se asigna el rol de EMPLEADO.
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body) {
         try {
+            String username = body.getOrDefault("username", "").toString().trim();
+            String password = body.getOrDefault("password", "").toString().trim();
+            if (username.isEmpty() || password.isEmpty())
+                return ResponseEntity.badRequest().body(Map.of("error", "Username y contraseña son obligatorios"));
+            if (usuarioDao.findByUsername(username).isPresent())
+                return ResponseEntity.badRequest().body(Map.of("error", "El username ya está en uso"));
+
             Empleado e = buildFromBody(new Empleado(), body);
             e.setCedula(null);
-            return ResponseEntity.status(HttpStatus.CREATED).body(empleadoDao.save(e));
+            Empleado savedEmpleado = empleadoDao.save(e);
+
+            Usuario usuario = new Usuario();
+            usuario.setUsername(username);
+            usuario.setPassword(passwordEncoder.encode(password));
+            usuario.setRol(Rol.EMPLEADO);
+            usuario.setEmail(savedEmpleado.getEmail());
+            usuario.setCreatedAt(java.time.LocalDate.now());
+            usuario.setEmpleado(savedEmpleado);
+            usuarioDao.save(usuario);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "cedula", savedEmpleado.getCedula(),
+                    "username", username,
+                    "mensaje", "Empleado y usuario creados correctamente"));
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
@@ -86,10 +118,12 @@ public class EmpleadoController {
     @PostMapping("/{cedula}/cabanas/{cabanaId}")
     public ResponseEntity<?> asignarACabana(@PathVariable Long cedula, @PathVariable Long cabanaId) {
         Empleado emp = empleadoDao.findById(cedula).orElse(null);
-        if (emp == null) return ResponseEntity.notFound().build();
+        if (emp == null)
+            return ResponseEntity.notFound().build();
 
         Cabana cab = cabanaDao.findById(cabanaId).orElse(null);
-        if (cab == null) return ResponseEntity.notFound().build();
+        if (cab == null)
+            return ResponseEntity.notFound().build();
 
         List<Empleado> empleados = cab.getEmpleados();
         boolean yaAsignado = empleados != null && empleados.stream()
@@ -109,7 +143,8 @@ public class EmpleadoController {
     @DeleteMapping("/{cedula}/cabanas/{cabanaId}")
     public ResponseEntity<?> desasignarDeCabana(@PathVariable Long cedula, @PathVariable Long cabanaId) {
         Cabana cab = cabanaDao.findById(cabanaId).orElse(null);
-        if (cab == null) return ResponseEntity.notFound().build();
+        if (cab == null)
+            return ResponseEntity.notFound().build();
 
         if (cab.getEmpleados() != null) {
             cab.getEmpleados().removeIf(e -> e.getCedula().equals(cedula));
@@ -119,6 +154,7 @@ public class EmpleadoController {
     }
 
     // ── Helper: construye Empleado desde el body Map ─────────────
+    //Se agegaron los campos faltantes de empleado, incluyendo el campo de coordinador que es un select con opciones "Es coordinador" y "No es coordinador".
     private Empleado buildFromBody(Empleado e, Map<String, Object> body) {
         if (body.containsKey("nombre"))
             e.setNombre(body.get("nombre").toString());
@@ -136,6 +172,10 @@ public class EmpleadoController {
             e.setDescripcion(body.get("descripcion").toString());
         if (body.containsKey("idiomas"))
             e.setIdiomas(body.get("idiomas").toString());
+        if (body.containsKey("esCoordinador")) {
+            boolean esCoord = Boolean.parseBoolean(body.get("esCoordinador").toString());
+            e.setEsCoordinador(esCoord ? "Es coordinador" : null);
+        }
         return e;
     }
 }

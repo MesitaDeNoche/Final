@@ -27,6 +27,9 @@ public class Empleado extends Persona {
     @Column(name = "idiomas", length = 200)
     private String idiomas;
 
+    @Column(name = "es_coordinador", length = 50)
+    private String esCoordinador;
+
     /**
      * Relación reflexiva: un empleado puede tener un coordinador (otro empleado).
      * FetchType.LAZY evita cargar toda la cadena de coordinadores innecesariamente.
@@ -84,5 +87,13 @@ public class Empleado extends Persona {
 
     public void setSubordinados(List<Empleado> subordinados) {
         this.subordinados = subordinados;
+    }
+
+    public String getEsCoordinador() {
+        return esCoordinador;
+    }
+
+    public void setEsCoordinador(String esCoordinador) {
+        this.esCoordinador = esCoordinador;
     }
 }

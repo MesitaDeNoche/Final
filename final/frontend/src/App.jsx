@@ -141,10 +141,10 @@ const LockIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="non
 const CalIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>;
 const GameIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="6" y1="12" x2="10" y2="12" /><line x1="8" y1="10" x2="8" y2="14" /><circle cx="15" cy="11" r="1" fill="currentColor" /><circle cx="17" cy="13" r="1" fill="currentColor" /><path d="M21 6H3a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z" /></svg>;
 const PersonIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
-const EyeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
-const EyeOffIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
-const BriefcaseIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="12"/></svg>;
-const LinkIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>;
+const EyeIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>;
+const EyeOffIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>;
+const BriefcaseIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /><line x1="12" y1="12" x2="12" y2="12" /></svg>;
+const LinkIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>;
 
 // ============================================================
 // COMPONENTES BASE
@@ -510,6 +510,9 @@ const EmpleadoFormModal = ({ empleado, onClose, onSaved, showToast }) => {
     salario: empleado?.salario || "",
     descripcion: empleado?.descripcion || "",
     idiomas: empleado?.idiomas || "",
+    username: "",
+    password: "",
+    esCoordinador: false,
   });
   const [loading, setLoading] = useState(false);
 
@@ -517,9 +520,17 @@ const EmpleadoFormModal = ({ empleado, onClose, onSaved, showToast }) => {
     if (!form.nombre || !form.apellido || !form.email || !form.telefono || !form.fechaNacimiento) {
       showToast("Completa los campos obligatorios.", "err"); return;
     }
+    if (!isEdit && (!form.username || !form.password)) {
+      showToast("El username y la contraseña son obligatorios.", "err"); return;
+    }
     setLoading(true);
     try {
-      const payload = { ...form, salario: form.salario ? Number(form.salario) : 0 };
+      const payload = {
+        ...form,
+        salario: form.salario ? Number(form.salario) : 0,
+        ...(isEdit ? {} : { username: form.username, password: form.password }),
+        esCoordinador: form.esCoordinador,
+      };
       if (isEdit) await api(`/api/empleado/${empleado.cedula}`, { method: "PUT", body: JSON.stringify(payload) });
       else await api("/api/empleado", { method: "POST", body: JSON.stringify(payload) });
       showToast(isEdit ? "Empleado actualizado." : "Empleado creado.", "ok");
@@ -546,6 +557,7 @@ const EmpleadoFormModal = ({ empleado, onClose, onSaved, showToast }) => {
     </div>
   );
 
+  //Se agregaron los campos faltantes de empleado, incluyendo el campo de coordinador que es un select con opciones "Es coordinador" y "No es coordinador". 
   return (
     <Modal title={isEdit ? "Editar empleado" : "Nuevo empleado"} onClose={onClose} wide>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
@@ -557,11 +569,28 @@ const EmpleadoFormModal = ({ empleado, onClose, onSaved, showToast }) => {
         {f("Salario (USD)", "salario", { type: "number", placeholder: "0" })}
         {f("Idiomas", "idiomas", { placeholder: "Español, Inglés", full: true })}
         {f("Descripción", "descripcion", { textarea: true, placeholder: "Rol o notas del empleado...", full: true })}
+
+        {!isEdit && f("Username", "username", { required: true, placeholder: "ej. empleado_juan", full: true })}
+        {!isEdit && f("Contraseña", "password", { required: true, type: "password", placeholder: "Mínimo 8 caracteres", full: true })}
+
+        {/* Campo coordinador */}
+        <div style={{ marginBottom: "16px", gridColumn: "1 / -1" }}>
+          <label style={{ display: "block", fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--bark)", marginBottom: "6px" }}>
+            Coordinador
+          </label>
+          <select
+            value={form.esCoordinador ? "si" : "no"}
+            onChange={e => setForm(p => ({ ...p, esCoordinador: e.target.value === "si" }))}
+            style={{ width: "100%", padding: "11px 14px", border: "1.5px solid var(--fog)", borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: "var(--input-bg)", fontFamily: "'DM Sans',sans-serif" }}>
+            <option value="no">No es coordinador</option>
+            <option value="si">Es coordinador</option>
+          </select>
+        </div>
       </div>
-      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-        <Btn variant="secondary" onClick={onClose}>Cancelar</Btn>
-        <Btn onClick={handleSave} disabled={loading}>{loading ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear empleado"}</Btn>
-      </div>
+        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+          <Btn variant="secondary" onClick={onClose}>Cancelar</Btn>
+          <Btn onClick={handleSave} disabled={loading}>{loading ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear empleado"}</Btn>
+        </div>
     </Modal>
   );
 };
@@ -684,8 +713,8 @@ const AsignarEmpleadosModal = ({ cabana, empleados, onClose, showToast, onSaved 
                     style={{
                       padding: "7px 16px", borderRadius: "8px", fontSize: "13px", cursor: loading ? "not-allowed" : "pointer",
                       fontFamily: "'DM Sans',sans-serif", fontWeight: 500, border: "none", transition: "all .2s",
-                      background: asignado ? "var(--moss)" : "var(--bark)",
-                      color: "white"
+                      background: asignado ? "var(--moss)" : "var(--gold)",
+                      color: "#2a1a0e"
                     }}>
                     {asignado ? "✓ Asignado" : "+ Asignar"}
                   </button>
@@ -1068,9 +1097,9 @@ const CatalogoCabanas = ({ cabanas, loading, username, esAdmin, showToast, onRef
 // HOME / DASHBOARD
 // ============================================================
 const HomePage = ({ user, onLogout, showToast }) => {
-  const esAdmin    = user?.rol === "ADMIN";
+  const esAdmin = user?.rol === "ADMIN";
   const esEmpleado = user?.rol === "EMPLEADO";
-  const esCliente  = !esAdmin && !esEmpleado;
+  const esCliente = !esAdmin && !esEmpleado;
 
   const [paginaActual, setPaginaActual] = useState("dashboard");
   const [cabanas, setCabanas] = useState([]);
@@ -1105,7 +1134,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
   useEffect(() => {
     cargarCabanas();
     cargarEntretenimientos();
-    if (esAdmin)    { cargarStats(); cargarEmpleados(); }
+    if (esAdmin) { cargarStats(); cargarEmpleados(); }
     if (esEmpleado) { cargarEmpleados(); }
   }, []);
 
@@ -1121,39 +1150,39 @@ const HomePage = ({ user, onLogout, showToast }) => {
 
   // Badge de rol en navbar
   const rolBadge = esAdmin
-    ? { label: "Admin",    bg: "#fef3c7", color: "#92400e" }
+    ? { label: "Admin", bg: "#fef3c7", color: "#92400e" }
     : esEmpleado
-    ? { label: "Empleado", bg: "#ede9fe", color: "#5b21b6" }
-    : { label: "Cliente",  bg: "var(--fog)", color: "#8a7060" };
+      ? { label: "Empleado", bg: "#ede9fe", color: "#5b21b6" }
+      : { label: "Cliente", bg: "var(--fog)", color: "#8a7060" };
 
   // Stats según rol
   const statsCards = esAdmin
     ? [
-        { label: "Cabañas",          value: stats ? String(stats.totalCabanas)  : "…", color: "var(--moss)" },
-        { label: "Reservas totales", value: stats ? String(stats.totalReservas) : "…", color: "var(--sky)"  },
-        { label: "Clientes",         value: stats ? String(stats.totalClientes) : "…", color: "var(--gold)" },
-        { label: "Empleados",        value: String(empleados.length),                  color: "var(--bark)" },
-      ]
+      { label: "Cabañas", value: stats ? String(stats.totalCabanas) : "…", color: "var(--moss)" },
+      { label: "Reservas totales", value: stats ? String(stats.totalReservas) : "…", color: "var(--sky)" },
+      { label: "Clientes", value: stats ? String(stats.totalClientes) : "…", color: "var(--gold)" },
+      { label: "Empleados", value: String(empleados.length), color: "var(--bark)" },
+    ]
     : esEmpleado
-    ? [
-        { label: "Total cabañas",    value: String(cabanas.length),                                         color: "var(--moss)" },
-        { label: "Entretenimientos", value: String(entretenimientos.length),                                 color: "var(--gold)" },
-        { label: "Compañeros",       value: String(empleados.length),                                       color: "#7c3aed"     },
-        { label: "Zonas",            value: String(new Set(cabanas.map(c => c.zona)).size),                  color: "var(--sky)"  },
+      ? [
+        { label: "Total cabañas", value: String(cabanas.length), color: "var(--moss)" },
+        { label: "Entretenimientos", value: String(entretenimientos.length), color: "var(--gold)" },
+        { label: "Compañeros", value: String(empleados.length), color: "#7c3aed" },
+        { label: "Zonas", value: String(new Set(cabanas.map(c => c.zona)).size), color: "var(--sky)" },
       ]
-    : [
-        { label: "Cabañas disponibles", value: String(cabanas.length),                                              color: "var(--moss)" },
-        { label: "Premium",             value: String(cabanas.filter(c => c.categoria === "Premium").length),        color: "var(--gold)" },
-        { label: "Estándar",            value: String(cabanas.filter(c => c.categoria === "Estándar").length),       color: "var(--sky)"  },
-        { label: "Suites",              value: String(cabanas.filter(c => c.categoria === "Suite").length),          color: "var(--bark)" },
+      : [
+        { label: "Cabañas disponibles", value: String(cabanas.length), color: "var(--moss)" },
+        { label: "Premium", value: String(cabanas.filter(c => c.categoria === "Premium").length), color: "var(--gold)" },
+        { label: "Estándar", value: String(cabanas.filter(c => c.categoria === "Estándar").length), color: "var(--sky)" },
+        { label: "Suites", value: String(cabanas.filter(c => c.categoria === "Suite").length), color: "var(--bark)" },
       ];
 
   // Tabs según rol
   const navTabs = [
     { id: "dashboard", label: "Dashboard" },
-    { id: "catalogo",  label: "Cabañas"   },
-    ...(esAdmin    ? [{ id: "admin",      label: "Administración" }] : []),
-    ...(esEmpleado ? [{ id: "misCabanas", label: "Mis Cabañas"   }] : []),
+    { id: "catalogo", label: "Cabañas" },
+    ...(esAdmin ? [{ id: "admin", label: "Administración" }] : []),
+    ...(esEmpleado ? [{ id: "misCabanas", label: "Mis Cabañas" }] : []),
   ];
 
   return (
@@ -1176,7 +1205,7 @@ const HomePage = ({ user, onLogout, showToast }) => {
                 style={{
                   padding: "6px 16px", borderRadius: "8px", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all .2s",
                   background: paginaActual === t.id ? "var(--fog)" : "transparent",
-                  color:      paginaActual === t.id ? "var(--bark)" : "#8a7060",
+                  color: paginaActual === t.id ? "var(--bark)" : "#8a7060",
                   fontWeight: paginaActual === t.id ? 500 : 400,
                 }}>
                 {t.label}
@@ -1211,24 +1240,24 @@ const HomePage = ({ user, onLogout, showToast }) => {
           <div style={{ background: "linear-gradient(135deg,var(--bark) 0%,#5a3d2b 60%,var(--moss) 100%)", padding: "48px 40px", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "280px", height: "280px", borderRadius: "50%", background: "rgba(200,169,110,0.08)" }} />
             <div style={{ position: "relative", zIndex: 1, animation: "fadeUp .6s ease both" }}>
-              <p style={{ color: "var(--gold)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "10px" }}>
+              <p style={{ color: "var(--cream)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "10px", opacity: 0.75 }}>
                 {new Date().toLocaleDateString("es-CO", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </p>
               <h1 style={{ fontFamily: "'Cormorant Garamond',serif", color: "var(--cream)", fontSize: "38px", fontWeight: 300, lineHeight: 1.2 }}>
                 {esAdmin ? "Panel de administración" : esEmpleado ? `Bienvenido, ${user?.username}` : `Hola de nuevo, ${user?.username}`}
               </h1>
-              <p style={{ color: "rgba(245,239,230,0.6)", marginTop: "8px", fontSize: "15px" }}>
+              <p style={{ color: "var(--cream)", marginTop: "8px", fontSize: "15px", opacity: 0.85 }}>
                 {esAdmin ? "Gestiona cabañas, reservas, empleados y entretenimientos." : esEmpleado ? "Consulta las cabañas del complejo y las reservas activas." : "Explora nuestras cabañas y haz tu reserva."}
               </p>
               {esCliente && (
                 <button onClick={() => setPaginaActual("catalogo")}
-                  style={{ marginTop: "20px", padding: "12px 28px", background: "var(--gold)", color: "var(--bark)", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                  style={{ marginTop: "20px", padding: "12px 28px", background: "var(--gold)", color: "#2a1a0e", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", boxShadow: "0 2px 12px rgba(0,0,0,0.25)" }}>
                   Explorar cabañas →
                 </button>
               )}
               {esEmpleado && (
                 <button onClick={() => setPaginaActual("misCabanas")}
-                  style={{ marginTop: "20px", padding: "12px 28px", background: "var(--gold)", color: "var(--bark)", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                  style={{ marginTop: "20px", padding: "12px 28px", background: "var(--gold)", color: "#2a1a0e", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", boxShadow: "0 2px 10px rgba(0,0,0,0.25)" }}>
                   Ver cabañas →
                 </button>
               )}
@@ -1301,9 +1330,9 @@ const HomePage = ({ user, onLogout, showToast }) => {
                 <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                   {(esCliente ? [
                     { label: "Explorar cabañas", onClick: () => setPaginaActual("catalogo") },
-                    { label: "Mis reservas",     onClick: () => setModal({ tipo: "reservas" }) },
+                    { label: "Mis reservas", onClick: () => setModal({ tipo: "reservas" }) },
                   ] : [
-                    { label: "Ver cabañas",  onClick: () => setPaginaActual("misCabanas") },
+                    { label: "Ver cabañas", onClick: () => setPaginaActual("misCabanas") },
                     { label: "Ver reservas", onClick: () => setModal({ tipo: "reservas" }) },
                   ]).map((a, i) => (
                     <button key={i} onClick={a.onClick}
@@ -1610,7 +1639,7 @@ const RegistroPage = ({ onBack }) => {
       if (msg) newErrors[name] = msg;
     });
     // Validar formato aunque no estén vacíos
-    if (!newErrors.email)    { const m = validateField("email",    form.email);    if (m) newErrors.email    = m; }
+    if (!newErrors.email) { const m = validateField("email", form.email); if (m) newErrors.email = m; }
     if (!newErrors.password) { const m = validateField("password", form.password); if (m) newErrors.password = m; }
     if (!newErrors.username) { const m = validateField("username", form.username); if (m) newErrors.username = m; }
     if (!newErrors.fechaNacimiento) { const m = validateField("fechaNacimiento", form.fechaNacimiento); if (m) newErrors.fechaNacimiento = m; }
@@ -1632,14 +1661,14 @@ const RegistroPage = ({ onBack }) => {
   };
 
   const fields = [
-    { name: "nombre",          label: "Nombre",              placeholder: "María",               required: true },
-    { name: "apellido",        label: "Apellido",             placeholder: "González",            required: true },
-    { name: "email",           label: "Email",                placeholder: "maria@email.com",     required: true },
-    { name: "telefono",        label: "Teléfono",             placeholder: "+57 310 000 0000",    required: true },
-    { name: "pais",            label: "País",                 placeholder: "Colombia" },
-    { name: "fechaNacimiento", label: "Fecha de nacimiento",  placeholder: "",   type: "date",    required: true },
-    { name: "username",        label: "Usuario",              placeholder: "maria_g",             required: true },
-    { name: "password",        label: "Contraseña",           placeholder: "Mínimo 8 caracteres", type: "password", required: true },
+    { name: "nombre", label: "Nombre", placeholder: "María", required: true },
+    { name: "apellido", label: "Apellido", placeholder: "González", required: true },
+    { name: "email", label: "Email", placeholder: "maria@email.com", required: true },
+    { name: "telefono", label: "Teléfono", placeholder: "+57 310 000 0000", required: true },
+    { name: "pais", label: "País", placeholder: "Colombia" },
+    { name: "fechaNacimiento", label: "Fecha de nacimiento", placeholder: "", type: "date", required: true },
+    { name: "username", label: "Usuario", placeholder: "maria_g", required: true },
+    { name: "password", label: "Contraseña", placeholder: "Mínimo 8 caracteres", type: "password", required: true },
   ];
 
   const fullWidthFields = ["email", "fechaNacimiento", "username", "password"];
@@ -1663,23 +1692,23 @@ const RegistroPage = ({ onBack }) => {
                     {f.label}{f.required && <span style={{ color: "#ef4444" }}> *</span>}
                   </label>
                   <div style={{ position: "relative" }}>
-                  <input
-                    type={f.name === "password" ? (showPwd ? "text" : "password") : (f.type || "text")}
-                    name={f.name}
-                    value={form[f.name]}
-                    onChange={handleChange}
-                    placeholder={f.placeholder}
-                    {...(f.name === "fechaNacimiento" ? { max: new Date().toISOString().split("T")[0] } : {})}
-                    className={[hasError ? "field-error" : "", isShaking ? "field-shake" : ""].join(" ").trim()}
-                    style={{ width: "100%", padding: f.name === "password" ? "11px 40px 11px 14px" : "11px 14px", border: `1.5px solid ${hasError ? "#ef4444" : "var(--input-border)"}`, borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: hasError ? "#fff5f5" : "var(--input-bg)", fontFamily: "'DM Sans',sans-serif", transition: "border-color .2s, background .2s" }}
-                    onFocus={e => { if (!hasError) e.target.style.borderColor = "var(--moss)"; }}
-                    onBlur={e => { if (!hasError) e.target.style.borderColor = "var(--input-border)"; }}
-                  />
-                  {f.name === "password" && (
-                    <button type="button" className="pwd-toggle" onClick={() => setShowPwd(v => !v)} tabIndex={-1}>
-                      {showPwd ? <EyeOffIcon /> : <EyeIcon />}
-                    </button>
-                  )}
+                    <input
+                      type={f.name === "password" ? (showPwd ? "text" : "password") : (f.type || "text")}
+                      name={f.name}
+                      value={form[f.name]}
+                      onChange={handleChange}
+                      placeholder={f.placeholder}
+                      {...(f.name === "fechaNacimiento" ? { max: new Date().toISOString().split("T")[0] } : {})}
+                      className={[hasError ? "field-error" : "", isShaking ? "field-shake" : ""].join(" ").trim()}
+                      style={{ width: "100%", padding: f.name === "password" ? "11px 40px 11px 14px" : "11px 14px", border: `1.5px solid ${hasError ? "#ef4444" : "var(--input-border)"}`, borderRadius: "8px", fontSize: "14px", outline: "none", color: "var(--bark)", background: hasError ? "#fff5f5" : "var(--input-bg)", fontFamily: "'DM Sans',sans-serif", transition: "border-color .2s, background .2s" }}
+                      onFocus={e => { if (!hasError) e.target.style.borderColor = "var(--moss)"; }}
+                      onBlur={e => { if (!hasError) e.target.style.borderColor = "var(--input-border)"; }}
+                    />
+                    {f.name === "password" && (
+                      <button type="button" className="pwd-toggle" onClick={() => setShowPwd(v => !v)} tabIndex={-1}>
+                        {showPwd ? <EyeOffIcon /> : <EyeIcon />}
+                      </button>
+                    )}
                   </div>
                   {hasError && (
                     <p style={{ color: "#ef4444", fontSize: "11px", marginTop: "4px", fontWeight: 500 }}>
@@ -1701,18 +1730,18 @@ const RegistroPage = ({ onBack }) => {
 };
 
 // Íconos de tema y configuración
-const SunIcon    = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
-const MoonIcon   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
-const AutoIcon   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l4 4"/></svg>;
-const GearIcon   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+const SunIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>;
+const MoonIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>;
+const AutoIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10" /><path d="M12 2v10l4 4" /></svg>;
+const GearIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>;
 
 // Panel de configuración flotante
 const ConfigPanel = ({ theme, setTheme }) => {
   const [open, setOpen] = useState(false);
   const themes = [
-    { key: "light", label: "Claro",      icon: <SunIcon /> },
-    { key: "dark",  label: "Oscuro",     icon: <MoonIcon /> },
-    { key: "auto",  label: "Automático", icon: <AutoIcon /> },
+    { key: "light", label: "Claro", icon: <SunIcon /> },
+    { key: "dark", label: "Oscuro", icon: <MoonIcon /> },
+    { key: "auto", label: "Automático", icon: <AutoIcon /> },
   ];
   return (
     <div style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 3000 }}>
@@ -1736,7 +1765,7 @@ const ConfigPanel = ({ theme, setTheme }) => {
                   cursor: "pointer", fontSize: "14px", fontFamily: "'DM Sans',sans-serif",
                   fontWeight: theme === t.key ? 600 : 400, transition: "all .15s",
                   background: theme === t.key ? "var(--bark)" : "transparent",
-                  color:      theme === t.key ? "var(--cream)" : "var(--bark)",
+                  color: theme === t.key ? "var(--cream)" : "var(--bark)",
                   textAlign: "left", width: "100%"
                 }}>
                 {t.icon} {t.label}
@@ -1787,8 +1816,8 @@ export default function App() {
       {/* Panel de configuración — esquina inferior derecha, siempre visible */}
       <ConfigPanel theme={theme} setTheme={setTheme} />
 
-      {page === "login"    && <LoginPage    onLogin={u => { setUser(u); setPage("home"); }} onGoRegister={() => setPage("registro")} />}
-      {page === "home"     && <HomePage     user={user} onLogout={() => { setUser(null); setPage("login"); }} showToast={showToast} />}
+      {page === "login" && <LoginPage onLogin={u => { setUser(u); setPage("home"); }} onGoRegister={() => setPage("registro")} />}
+      {page === "home" && <HomePage user={user} onLogout={() => { setUser(null); setPage("login"); }} showToast={showToast} />}
       {page === "registro" && <RegistroPage onBack={() => setPage("login")} />}
     </>
   );

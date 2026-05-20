@@ -71,6 +71,7 @@ public class CabanaController {
     }
 
     // ── Helper: construye Cabana desde el body Map ───────────────
+    // El body puede contener campos simples (zona, categoria, etc) y también relaciones (entretenimientoIds, empleadoIds)
     private Cabana buildFromBody(Cabana c, Map<String, Object> body) {
         if (body.containsKey("zona"))
             c.setZona(body.get("zona").toString());
